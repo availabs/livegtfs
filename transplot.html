@@ -13,19 +13,47 @@ svg{
 	position:absolute;
   float:left;
 }
+.station {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+/* Creates a small triangle extender for the tooltip */
+.station:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.station.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
 </style>
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
-<!-- <script src="bower_components/jquery/dist/jquery.min.js"></script> -->
+<script src="bower_components/d3-tip/index.js"></script>
+<!--<script src="bower_components/jquery/dist/jquery.min.js"></script> -->
 
 <script>
+
 
 var W_height=window.outerHeight,
 	W_width=window.outerWidth;
 
 var currentAgency;
 var routeGeo;
-var scale;
 var stopGeo;
 var projection, path,
 geoJson, GeoData;
@@ -41,13 +69,14 @@ function getGraphData(AgencyID){
 		console.log(data);
 		routeGeo = data;
 		plotGraph(routeGeo);
+		getStopData(AgencyID);
 	});
 }
 
 function getStopData(AgencyID){
-	var stopUrl = "http://localhost:1337/agency/"+AgencyID+"/stops";
+	var stopUrl = "http://api.availabs.org/gtfs/agency/"+AgencyID+"/stops";
 
-	d3.json(topUrl,function(err,data){
+	d3.json(stopUrl,function(err,data){
 		if(err) console.log(err);
 
 		console.log(data);
@@ -57,12 +86,39 @@ function getStopData(AgencyID){
 }
 
 function plotStops(StopData){
-	
+
+	var group = d3.select("#plot");
+	var stops = topojson.feature(StopData,StopData.objects.stops);
+	console.log(stops);
+
+	var tip = d3.tip()
+				.attr("class",'station')
+				.offset([-10,0])
+				.html(function(d){
+					return "<strong>Station: </strong><span style='color:red'>" +d.properties.stop_name+"</span>";
+				})
+
+	group.selectAll(".stationLabel")
+					.data(stops.features).enter().append("circle")
+					.attr("class","stationLabel")
+					.attr("transform",function(d){
+						return "translate("+projection(d.geometry.coordinates)+")"
+					})
+					.attr("r","2.5");
+
+	group.call(tip);
+
+		d3.selectAll(".stationLabel")
+					.on("mouseover",tip.show)
+					.on("mouseout",tip.hide)
+					
+
+					
 }
 
 function plotGraph(GeoData){
-	bbox = GeoData.bbox,
-	scale = .95/ Math.max( (bbox[3] - bbox[1])/W_width, (bbox[2] - bbox[0])/W_height  );
+	var bbox = GeoData.bbox;
+	var scale = .95/ Math.max( (bbox[3] - bbox[1])/W_width, (bbox[2] - bbox[0])/W_height  );
 
 	console.log(bbox);
 	console.log(scale);	
@@ -79,14 +135,14 @@ function plotGraph(GeoData){
     /*get the bounds of the figure*/
     x1 = bounds[0][0], x2 = bounds[1][0],y1 = bounds[0][1], y2 = bounds[1][1];
     /*set the frame of the svg to fit the size of our figure*/
-    height = y2-y1;
-    width = x2-x1;
+    var height = y2-y1;
+    var width = x2-x1;
 	var svg = d3.select("body").append("svg")
 				.attr("height",height+10)
-				.attr("width", width+10);
+				.attr("width", width+109);
 	var group = svg.append("g").attr("id","plot");
 				//translate our figure in the svg to upper left corner*/
-				group.attr("transform",function(){return "translate("+(0-x1)+","+(0-y1)+")";  });
+				group.attr("transform",function(){return "translate("+(0-x1)+","+(0-y1+30)+")";  });
 
 	var paths = group.selectAll("path").data(geoJson.features)
 					.enter().append("path")
