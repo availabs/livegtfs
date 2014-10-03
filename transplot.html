@@ -1,0 +1,65 @@
+<!--TransitPlotter.html-->
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<style>
+path{
+  
+  stroke-width:0px;
+  stroke:#000;
+}
+svg{
+  float:left;
+}
+</style>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+
+
+<script>
+
+var height=1000,
+	width=1000;
+
+var currentAgency;
+var routeGeo;
+
+var projection = d3.geo.mercator()
+            .center([-74.251961, 40.512764])
+            .scale(20000)
+            
+var path = d3.geo.path().projection(projection);
+
+function getGraphData(AgencyID){
+	//We use the availabs api to retrieve route data of specified id
+	var url = "http://api.availabs.org/gtfs/agency/"+AgencyID+"/routes"
+	//url = "http://localhost:1337/agency/"+AgencyID+"/routes"
+	currentAgency = AgencyID;
+	d3.json(url,function(err,data){
+		if(err) console.log(err);
+
+		console.log(data);
+		routeGeo = data;
+		plotGraph(routeGeo);
+	})
+}
+
+function plotGraph(GeoData){
+	
+	var svg = d3.select("body").append("svg")
+				.attr("height",height)
+				.attr("width",width);
+	var paths = svg.selectAll("path").data(topojson.feature(GeoData,GeoData.objects.routes).features)
+					.enter().append("path")
+					.attr("id",function(d){return d.properties.route_id;})
+					.attr("d",path);
+
+
+
+
+}
+
+getGraphData(109);
+
+
+</script>
