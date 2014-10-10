@@ -9,10 +9,7 @@ path{
   stroke:#000;
   fill:none;
 }
-svg{
-	position:absolute;
-  float:left;
-}
+
 .station {
   line-height: 1;
   font-weight: bold;
@@ -31,6 +28,7 @@ svg{
   color: rgba(0, 0, 0, 0.8);
   content: "\25BC";
   position: absolute;
+  float:left;
   text-align: center;
 }
 
@@ -40,19 +38,72 @@ svg{
   top: 100%;
   left: 0;
 }
+.axis {
+  font: 10px sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.axis .domain {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .3;
+  stroke-width: 10px;
+  stroke-linecap:round;
+}
+
+.axis .halo {
+  fill: none;
+  stroke: #ddd;
+  stroke-width: 8px;
+  stroke-linecap: round;
+}
+
+.slider .handle {
+  fill: #fff;
+  stroke: #000;
+  stroke-opacity: .5;
+  stroke-width: 1.25px;
+  pointer-events: none;
+}
+
+.slider:hover {
+  fill:#f00;
+}
+#clock{
+  margin-bottom:0px;
+  padding:0px;
+  clear:both;
+  position:relative;
+  height:50px;
+  text-align:center;
+}
+
 </style>
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script src="bower_components/d3-tip/index.js"></script>
 <script src="mainPlot.js"></script>
+<script src="slider.js"></script>
 <!--<script src="bower_components/jquery/dist/jquery.min.js"></script> -->
 
 <script>
 
 
+ var clock = d3.select("body").append("div")
+    .attr("id","clock");
 
+    clock.append("h1").text("clock");
+    clock.style("width","500px")
 
- getGraphData(109);
+ var div = d3.select("body").append("div");
+ div.attr("id","graph")
+    .style("margin-top","-10px  ");
 
+ getGraphData(div,109);
+ buildSlider(div);
+
+ 
 
 </script>

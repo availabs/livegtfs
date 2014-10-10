@@ -9,7 +9,7 @@ var stopGeo;
 var projection, path,
 geoJson, GeoData;
 
-function getGraphData(AgencyID){
+function getGraphData(Element,AgencyID){
 	//We use the availabs api to retrieve route data of specified id
 	var routeUrl = "http://api.availabs.org/gtfs/agency/"+AgencyID+"/routes";
 	
@@ -19,7 +19,7 @@ function getGraphData(AgencyID){
 
 		console.log(data);
 		routeGeo = data;
-		plotGraph(routeGeo);
+		plotGraph(Element,routeGeo);
 		getStopData(AgencyID);
 	});
 }
@@ -67,7 +67,7 @@ function plotStops(StopData){
 					
 }
 
-function plotGraph(GeoData){
+function plotGraph(Element,GeoData){
 	var bbox = GeoData.bbox;
 	var scale = .95/ Math.max( (bbox[3] - bbox[1])/W_width, (bbox[2] - bbox[0])/W_height  );
 
@@ -88,12 +88,14 @@ function plotGraph(GeoData){
     /*set the frame of the svg to fit the size of our figure*/
     var height = y2-y1;
     var width = x2-x1;
-	var svg = d3.select("body").append("svg")
-				.attr("height",height+10)
-				.attr("width", width+109);
+	var svg = Element.append("svg")
+				.attr("height",height+0.1*height)
+				.attr("width", width + 0.1*width)
+				.style("position","absolute")
+				.style("float","left");
 	var group = svg.append("g").attr("id","plot");
 				//translate our figure in the svg to upper left corner*/
-				group.attr("transform",function(){return "translate("+(0-x1)+","+(0-y1+30)+")";  });
+				group.attr("transform",function(){return "translate("+(0-x1+0.05*width)+","+(0-y1+0.05*height)+")";  });
 
 	var paths = group.selectAll("path").data(geoJson.features)
 					.enter().append("path")
