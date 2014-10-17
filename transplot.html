@@ -75,6 +75,7 @@ path{
   margin-bottom:0px;
   padding:0px;
   clear:both;
+  
   position:relative;
   height:50px;
   text-align:center;
@@ -84,6 +85,7 @@ path{
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script src="bower_components/d3-tip/index.js"></script>
+
 <script src="mainPlot.js"></script>
 <script src="slider.js"></script>
 <!--<script src="bower_components/jquery/dist/jquery.min.js"></script> -->
@@ -91,18 +93,11 @@ path{
 <script>
 
 
- var clock = d3.select("body").append("div")
-    .attr("id","clock");
+  var mapdiv = d3.select("body").append("div");
+  mapdiv.attr("id","mapdiv");
+  mapdiv.style("float:left");
+getGraphData(mapdiv,109,buildSlider);
 
-    clock.append("h1").text("clock");
-    clock.style("width","500px")
-
- var div = d3.select("body").append("div");
- div.attr("id","graph")
-    .style("margin-top","-10px  ");
-
- getGraphData(div,109);
- buildSlider(div);
 
  
 
