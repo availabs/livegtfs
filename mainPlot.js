@@ -1,11 +1,11 @@
-/*This  file will contain the main plotting logic for the transit maps*/
+// /*This  file will contain the main plotting logic for the transit maps */
 var HOST = "http://localhost:1337"
 var W_height=window.outerHeight,
 	W_width=window.outerWidth;
 
 var currentAgency;
 var projection, path,
-geoJson, GeoData;
+geoJson, GeoData,Stops,Routes;
 
 
 // function getTripData(Route_ID,Day,AgencyID){
@@ -46,24 +46,29 @@ function getGraphData(Element,AgencyID,sliderCallback){
 	d3.json(routeUrl,function(err,data){
 		if(err) console.log(err);
 
-		
+
 		routeGeo = data;
-		console.log(routeGeo);
-		plotGraph(Element,routeGeo);
+		Routes = plotGraph(Element,routeGeo);
+		console.log(Routes)
 		getStopData(Element,AgencyID,sliderCallback);
 	});
 }
 
 function getStopData(Element,AgencyID,sliderCallback){
-	var stopUrl = "http://api.availabs.org/gtfs/agency/"+AgencyID+"/stops";
+	var stopUrl = HOST+"/agency/"+AgencyID+"/stops";
 
 	d3.json(stopUrl,function(err,data){
 		if(err) console.log(err);
 
 		
 		stopGeo = data;
-		plotStops(stopGeo);
+		Stops = plotStops(stopGeo);
 		sliderCallback(Element);
+		pathcoll = getPathCollection(Routes,Stops);
+		newroute = getStops("SI", Routes, pathcoll);
+		console.log(newroute)	
+		setShapes(newroute);
+
 		
 	});	
 }
@@ -72,7 +77,6 @@ function plotStops(StopData){
 
 	var group = d3.select("#plot");
 	var stops = topojson.feature(StopData,StopData.objects.stops);
-	
 
 	var tip = d3.tip()
 				.attr("class",'station')
@@ -83,8 +87,15 @@ function plotStops(StopData){
 
 	group.selectAll(".stationLabel")
 					.data(stops.features).enter().append("circle")
-					.attr("class","stationLabel")
-					.attr("id",function(d){return d.properties.stop_id;})
+					.attr("class",function(d){
+						var everyStation = " stationLabel";
+						var classes ="";
+						for(i in d.properties.routes)
+							classes += " route_"+d.properties.routes[i];
+						classes += everyStation;
+						return classes
+					})
+					.attr("id",function(d){return "station_"+d.properties.stop_id;})
 					.attr("transform",function(d){
 						return "translate("+projection(d.geometry.coordinates)+")"
 					})
@@ -97,24 +108,14 @@ function plotStops(StopData){
 		d3.selectAll(".stationLabel")
 					.on("mouseover",tip.show)
 					.on("mouseout",tip.hide)
-					
 
-					
+	return stops.features;					
 }
+
 /*{type:'Feature',properties:{}, geometry:test}*/
 function plotGraph(Element,GeoData){
 	var bbox = GeoData.bbox;
 	var scale = .95/ Math.max( (bbox[3] - bbox[1])/W_width, (bbox[2] - bbox[0])/W_height  );
-	
-
-	/*var newJson = {type:'FeatureCollection',features:[]};
-	GeoData.objects.routes.geometries.forEach(function(d){
-		var routeSwap = {type: "GeometryCollection", geometries:[d]}
-		var test = topojson.mesh(GeoData, routeSwap, function(a, b) { return true; });
-		console.log(test,d.properties);
-		var feature = {type:'Feature', properties:d.properties, geometry:{type:test.type, coordinates:test.coordinates}};
-		newJson.features.push(feature);
-	})*/
 	
 	geoJson = GeoData;
 	projection = d3.geo.mercator()
@@ -140,65 +141,11 @@ function plotGraph(Element,GeoData){
 
 	var paths = group.selectAll("path").data(geoJson.features)
 					.enter().append("path")
-					.attr("id",function(d){return d.properties.route_id;})
+					.attr("id",function(d){return "route_"+d.properties.route_id;})
 					.style("stroke",function(d){return "#"+d.properties.route_color;})
 
 					paths.attr("d",path); 
 				
-
+	return geoJson.features;
 }
 
-/*function cleanRoutes(routesGeo){
-
-	routesGeo.features.map(function(route){
-
-		if(typeof route.geometry != 'undefined' && route.geometry != null){
-			if(route.geometry.type == 'MultiLineString'){
-				var max = route.geometry.coordinates[0].length;
-				var keep = route.geometry.coordinates[0];
-				for(array in route.geometry.coordinates){
-					if( array.length > max){
-						max = array.length();
-						keep = array;
-					}
-				}
-
-				route.geometry.coordinates = [ union(route.geometry.coordinates)  ];
-			}
-		}
-
-	})
-
-}*/
-
-/*function union(arrays){
-	if(arrays == null || arrays.length == 0) //if we are given an empty list of arrays we return an empty array
-		return [];
-	var curunion = [];
-	for(var i = 0; i<arrays.length; i++){// for every array in the list of arrays
-		for(var j = 0; j< arrays[i].length; j++){ // for every element in the array
-			if(!arrayExists(curunion,arrays[i][j] ) ) // if the element is in the current union 
-				curunion.push(arrays[i][j]);         // add the element to the union.
-		}
-	}
-	return curunion;
-}
-
-function arrayExists(array,subarray){
-	var bool = array.every(function(element,index,array){
-		return !areEqual(element,subarray);
-	})
-	return !bool;
-}
-
-function areEqual(array1, array2){
-//assume similar structured array
-	if(array1.length  != array2.length)
-		return false;
-
-	for(ind in array1){
-		if(array1[ind] != array2[ind])
-			return false;
-	}	
-	return true;
-}*/

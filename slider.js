@@ -14,12 +14,12 @@ function getTripData(Route_ID,Day,AgencyID){
 				if(!tripData[d.trip_id])
 					tripData[d.trip_id] = []
 				tripData[d.trip_id].push(d);
-				if( (d.trip_id == "R20130803WKD_000100_SI.S01R") && !beenPlotted  ){
-					getTrip(tripData,"R20130803WKD_000100_SI.S01R");
+				if( (d.trip_id == "B20130803WKD_001150_A..S74R") && !beenPlotted  ){
+					getTrip(tripData,"B20130803WKD_001150_A..S74R");
 					beenPlotted = true;
 				}
 			})
-		console.log(tripData);
+		//console.log(tripData);
 	})
 }
 
@@ -29,7 +29,7 @@ function getTrip(Data,member){
 	.attr("class","trip")
 	.attr("id",member)
 	.attr("r","4")
-	.attr("transform",d3.select("#S31S").attr("transform"));
+	.attr("transform",d3.select("#A02S").attr("transform"));
 	
 }
 
@@ -42,7 +42,7 @@ function buildSlider(Element){
 
 
 
-
+	getTripData("A","MONDAY",109)
 	var formatTime = d3.time.format("%I:%M%p");
 	var isClock = false;
 	var margin = {top: 50, right: 200, bottom: 50, left: 200},
@@ -151,7 +151,7 @@ function buildSlider(Element){
 			hours = value.getHours();
 			minutes = value.getMinutes();
 		}
-		var path = d3.select('#SI').node();
+		var path = d3.select('#A').node();
 		var l = path.getTotalLength();
 
 		var trips = d3.selectAll(".trip");
@@ -163,5 +163,5 @@ function buildSlider(Element){
 		});
 	}
 
-	getTripData("SI","MONDAY",109)
+	
 }
