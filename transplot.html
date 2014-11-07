@@ -10,6 +10,14 @@ path{
   fill:none;
 }
 
+path[id*="#route_A"]{
+  stroke-width:8px;
+  opacity: 0.2
+}
+
+path[id*="#route_A"]:hover{
+  stroke-width:16px;
+}
 .station {
   line-height: 1;
   font-weight: bold;
@@ -89,6 +97,7 @@ path{
 <script src="mainPlot.js"></script>
 <script src="slider.js"></script>
 <script src="pather.js"></script>
+<script src="mover.js"></script>
 <!--<script src="bower_components/jquery/dist/jquery.min.js"></script> -->
 
 <script>

@@ -3,47 +3,15 @@
 
 
 var HOST = "http://localhost:1337"
-tripData = {}
-
-function getTripData(Route_ID,Day,AgencyID){
-	var tripURL = HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
-	d3.json(tripURL,function(err,data){
-		if(err) console.log(err);
-		var beenPlotted = false;
-			data.forEach(function(d){
-				if(!tripData[d.trip_id])
-					tripData[d.trip_id] = []
-				tripData[d.trip_id].push(d);
-				if( (d.trip_id == "B20130803WKD_001150_A..S74R") && !beenPlotted  ){
-					getTrip(tripData,"B20130803WKD_001150_A..S74R");
-					beenPlotted = true;
-				}
-			})
-		//console.log(tripData);
-	})
-}
-
-function getTrip(Data,member){
-	var startStation = d3.select("#plot");
-	startStation.append("circle")
-	.attr("class","trip")
-	.attr("id",member)
-	.attr("r","4")
-	.attr("transform",d3.select("#A02S").attr("transform"));
-	
-}
 
 
 function getMaxOfArray(numArray){
 	return Math.max.apply(null,numArray);
 }
 
-function buildSlider(Element){
+function buildSlider(Element,start,end,trip){
 
-
-
-	getTripData("A","MONDAY",109)
-	var formatTime = d3.time.format("%I:%M%p");
+	var formatTime = d3.time.format("%X");
 	var isClock = false;
 	var margin = {top: 50, right: 200, bottom: 50, left: 200},
 	    width = 120 - margin.left - margin.right,
@@ -51,13 +19,13 @@ function buildSlider(Element){
 	var buffer = 20;
 
 	var y = d3.time.scale()
-	    .domain([parseTime("5:30AM"), parseTime("11:30PM")])
+	    .domain([parseTime(start), parseTime(end)])
 	    .range([0, height])
 	    .clamp(true);
 
 	var brush = d3.svg.brush()
 	    .y(y)
-	    .extent([parseTime("5:30AM"),parseTime("5:30AM")])
+	    .extent([parseTime(start),parseTime(end)])
 	    .on("brush", brushed);
 	var div = Element.append("div");
 		div.attr("id","sliderDiv")
@@ -96,7 +64,7 @@ function buildSlider(Element){
 	    
 	var handle = slider.append("circle")
 	    .attr("class", "handle")
-	    .attr("transform", "translate(0,"+margin.top+")")
+	    .attr("transform", "translate(0,"+0+")")
 	    .attr("r", 9);
 
 	  //  slider
@@ -118,9 +86,9 @@ function buildSlider(Element){
 	    brush.extent([value, value]);
 	  }
 
-	  handle.attr("cy", y(value)-margin.top);
+	  handle.attr("cy", y(value));
 	  setTime(value);
-	  moveTrip(value);
+	  moveTrip(value,y,trip);
 	}
 
 	function parseTime(s) {
@@ -144,24 +112,5 @@ function buildSlider(Element){
 		}
 		clock.text( "Current Time: "+time )
 	}
-
-	function moveTrip(value){
-		var hours,minutes;
-		if (value instanceof Date){
-			hours = value.getHours();
-			minutes = value.getMinutes();
-		}
-		var path = d3.select('#A').node();
-		var l = path.getTotalLength();
-
-		var trips = d3.selectAll(".trip");
-		trips.attr("transform",function(){
-			var t = y(value)/getMaxOfArray(y.range())
-			var p = path.getPointAtLength(t*l);
-			console.log(t,l)
-			return "translate(" + p.x+"," + p.y+")";
-		});
-	}
-
 	
 }

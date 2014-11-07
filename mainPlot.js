@@ -5,38 +5,9 @@ var W_height=window.outerHeight,
 
 var currentAgency;
 var projection, path,
-geoJson, GeoData,Stops,Routes;
+geoJson, GeoData,Stops,Routes,pathcoll;
 
-
-// function getTripData(Route_ID,Day,AgencyID){
-// 	var tripURL = HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
-// 	d3.json(tripURL,function(err,data){
-// 		if(err) console.log(err);
-// 		var beenPlotted = false;
-// 			data.forEach(function(d){
-// 				if(!tripData[d.trip_id])
-// 					tripData[d.trip_id] = []
-// 				tripData[d.trip_id].push(d);
-// 				if( (d.trip_id == "R20130803WKD_000100_SI.S01R") && !beenPlotted  ){
-// 					getTrip(tripData,"R20130803WKD_000100_SI.S01R");
-// 					beenPlotted = true;
-// 				}
-// 			})
-// 		console.log(tripData);
-// 	})
-// }
-
-// function getTrip(Data,member){
-// 	var startStation = d3.select("#plot");
-// 	startStation.append("circle")
-// 	.attr("class","trip")
-// 	.attr("id",member)
-// 	.attr("r","4")
-// 	.attr("transform",d3.select("#S31S").attr("transform"));
-	
-// }
-
-
+var Day = "MONDAY";
 
 function getGraphData(Element,AgencyID,sliderCallback){
 	//We use the availabs api to retrieve route data of specified id
@@ -45,11 +16,9 @@ function getGraphData(Element,AgencyID,sliderCallback){
 	currentAgency = AgencyID;
 	d3.json(routeUrl,function(err,data){
 		if(err) console.log(err);
-
-
 		routeGeo = data;
 		Routes = plotGraph(Element,routeGeo);
-		console.log(Routes)
+		//console.log(Routes)
 		getStopData(Element,AgencyID,sliderCallback);
 	});
 }
@@ -59,16 +28,12 @@ function getStopData(Element,AgencyID,sliderCallback){
 
 	d3.json(stopUrl,function(err,data){
 		if(err) console.log(err);
-
-		
 		stopGeo = data;
 		Stops = plotStops(stopGeo);
-		sliderCallback(Element);
 		pathcoll = getPathCollection(Routes,Stops);
-		newroute = getStops("SI", Routes, pathcoll);
-		console.log(newroute)	
-		setShapes(newroute);
-
+		//Routes.forEach(function(route){
+			getTripData("A",Day,AgencyID,Element);
+		//})
 		
 	});	
 }
@@ -99,7 +64,7 @@ function plotStops(StopData){
 					.attr("transform",function(d){
 						return "translate("+projection(d.geometry.coordinates)+")"
 					})
-					.attr("r","2.5")
+					.attr("r","1")
 					.style("fill","white")
 					.style("stroke","black");
 
@@ -139,13 +104,38 @@ function plotGraph(Element,GeoData){
 				//translate our figure in the svg to upper left corner*/
 				group.attr("transform",function(){return "translate("+(0-x1+0.05*width)+","+(0-y1+0.05*height)+")";  });
 
-	var paths = group.selectAll("path").data(geoJson.features)
-					.enter().append("path")
-					.attr("id",function(d){return "route_"+d.properties.route_id;})
-					.style("stroke",function(d){return "#"+d.properties.route_color;})
-
-					paths.attr("d",path); 
-				
+	// var paths = group.selectAll("path").data(geoJson.features)
+	// 				.enter().append("path")
+	// 				.attr("id",function(d){return "route_"+d.properties.route_id;})
+	// 				.style("stroke",function(d){return "#"+d.properties.route_color;})
+	// 				//paths.attr("d",path); 
+	
 	return geoJson.features;
 }
 
+tripData = {}
+function getTripData(Route_ID,Day,AgencyID,Element){
+	var tripURL = HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
+	d3.json(tripURL,function(err,data){
+		if(err) console.log(err);
+		var beenPlotted = false;
+			data.forEach(function(d){
+				if(!tripData[d.trip_id])
+					tripData[d.trip_id] = []
+				tripData[d.trip_id].push(d);				
+			})
+		var froute = plotter(Route_ID);
+		setTrips(tripData,Element,froute);
+	})
+}
+
+
+
+function plotter(id){
+	var newRoutes = [];
+	//console.log(Routes);
+
+	var	newroute = getStops(id, Routes, pathcoll);
+	var finalRoute = setShapes(newroute,tripData);
+	return finalRoute;
+}
