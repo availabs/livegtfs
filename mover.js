@@ -1,5 +1,5 @@
 //plotter
-
+var TheRoute;
 
 function getTrip(member,StartID,froute){
 	var tripObj = {previousLine:'',currentLine:'',nextLine:'', name:member};
@@ -49,13 +49,17 @@ function moveTrip(value,map,trip){
 	var path1 = d3.select(trip.currentLine).node();
 	var l = path1.getTotalLength();
 	var trips = d3.selectAll(".trip");
+	nextStop = trip.currentLine.substr(trip.currentLine.indexOf("_e_") + 3);
+	currStop = trip.currentLine.substr(trip.currentLine.indexOf("_s_")+3,3);
 	trips.attr("transform",function(){
 		var t = map(value)/getMaxOfArray(map.range());
 		var p = path1.getPointAtLength(t*l);
-		var d = distance([p.x,p.y], projection(Stops[findStop("A03")].geometry.coordinates) );
+		var next = findStop(nextStop);
+		var curr = findStop(currStop);
+		var d = distance([p.x,p.y], projection(Stops[next].geometry.coordinates) );
 		console.log(d);
 		if(d < 0.0001)
-			console.log("On Stop")
+			updateTripObj(trip,next,route);
 		return "translate(" + p.x+"," + p.y+")";
 	});
 }
@@ -63,12 +67,14 @@ function moveTrip(value,map,trip){
 function setTrips(tripData,Element,froute){
 	// console.log(tripData);
 	console.log("The Route",froute);
+
 	var TestTrip = tripData["B20140608WKD_001150_A..S74R"];
 	var trip;
 	start = TestTrip[0].arrival_time;
 	end = TestTrip[TestTrip.length-1].arrival_time;
 	trip = getTrip("B20140608WKD_001150_A..S74R",TestTrip[0].stop_id,froute);
 	buildSlider(Element,start,end,trip);
+
 }
 
 
