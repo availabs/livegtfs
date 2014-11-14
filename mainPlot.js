@@ -9,10 +9,14 @@ geoJson, GeoData,Stops,Routes,pathcoll;
 
 var Day = "MONDAY";
 
+String.prototype.endsWith = function(suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
+
 function getGraphData(Element,AgencyID,sliderCallback){
 	//We use the availabs api to retrieve route data of specified id
-	var routeUrl = HOST+"/agency/"+AgencyID+"/routes";
-	
+	var routeUrl = 'sampleRouteData.json';//HOST+"/agency/"+AgencyID+"/routes";
+	console.log(routeUrl);
 	currentAgency = AgencyID;
 	d3.json(routeUrl,function(err,data){
 		if(err) console.log(err);
@@ -24,8 +28,8 @@ function getGraphData(Element,AgencyID,sliderCallback){
 }
 
 function getStopData(Element,AgencyID,sliderCallback){
-	var stopUrl = HOST+"/agency/"+AgencyID+"/stops";
-
+	var stopUrl = 'sampleStopData.json';//HOST+"/agency/"+AgencyID+"/stops";
+	console.log(stopUrl);
 	d3.json(stopUrl,function(err,data){
 		if(err) console.log(err);
 		stopGeo = data;
@@ -64,7 +68,7 @@ function plotStops(StopData){
 					.attr("transform",function(d){
 						return "translate("+projection(d.geometry.coordinates)+")"
 					})
-					.attr("r","1")
+					.attr("r","2")
 					.style("fill","white")
 					.style("stroke","black");
 
@@ -104,18 +108,19 @@ function plotGraph(Element,GeoData){
 				//translate our figure in the svg to upper left corner*/
 				group.attr("transform",function(){return "translate("+(0-x1+0.05*width)+","+(0-y1+0.05*height)+")";  });
 
-	// var paths = group.selectAll("path").data(geoJson.features)
-	// 				.enter().append("path")
-	// 				.attr("id",function(d){return "route_"+d.properties.route_id;})
-	// 				.style("stroke",function(d){return "#"+d.properties.route_color;})
-	// 				//paths.attr("d",path); 
+	var paths = group.selectAll("path").data(geoJson.features)
+					.enter().append("path")
+					.attr("id",function(d){return "route_"+d.properties.route_id;})
+					.style("stroke",function(d){return "#"+d.properties.route_color;})
+					//paths.attr("d",path); 
 	
 	return geoJson.features;
 }
 
 tripData = {}
 function getTripData(Route_ID,Day,AgencyID,Element){
-	var tripURL = HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
+	var tripURL = 'sampleTripData.json';//HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
+	console.log(tripURL);
 	d3.json(tripURL,function(err,data){
 		if(err) console.log(err);
 		var beenPlotted = false;

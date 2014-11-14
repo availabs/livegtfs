@@ -1,5 +1,6 @@
 //pather.js
-
+var inSameSegment;
+var graph = new Graph()
 function getPathCollection(routes,stations){
 	var pathCollection = []
 
@@ -33,54 +34,20 @@ function getStops(route_id, Routes,pathCollection){
 
 function setShapes(newRoute,tripData){
 	var currentBin,index;
-
+	inSameSegment = compBuilder(newRoute);
 	var routeSegments = {
 		type:'FeatureCollection',
 		features:[]
 	};
 	var splitList = [];
-	newRoute.stops.forEach(function(stop){
-		var coorList = [];
-		var closest = []
-		
-		newRoute.geometry.coordinates.forEach(function(lineString,stringIndex){
-			
-			lineString.forEach(function(coors,index){
-
-				var info = {'si':stringIndex,"i":index,'dist':distance(stop.geometry.coordinates,coors)}
-				closest.push(info);
-
-
-			})
-
-		})
-		var min = d3.min(closest,function(d){ return d.dist; });
-		var indexes = {};
-		
-		closest.forEach(function(d){
-			if(d.dist === min){
-				indexes = d;
-			}
-		})
-		//console.log('indexes of closest point to stop',stop.properties.stop_name,indexes)
-		indexes.stop = stop.properties.stop_id;
-		splitList.push(indexes)
-	});
-
 	var realStops = getStations(newRoute.stops);
-	
+	trueStops = getTrueStops(newRoute.geometry,realStops);
 
-
-	// routeSegments  = getLines(newRoute.geometry.coordinates[0],realStops);
-	// routeSegments2 = getLines(newRoute.geometry.coordinates[1],realStops);
-	// routeSegments3 = getLines(newRoute.geometry.coordinates[2],realStops);
-	// routeSegments4 = getLines(newRoute.geometry.coordinates[3],realStops);	
-	// var segmentsArr  = [routeSegments,routeSegments2,routeSegments3,routeSegments4];
 	var segmentsArr = getAllLines(newRoute.geometry,realStops);
 	console.log(segmentsArr)
 	
 	var longestTrip = maxLen(tripData);
-	healWithLongestTrip(segmentsArr,longestTrip);
+	healWithLongestTrip(segmentsArr,longestTrip,realStops);
 	routeSegments = mergeSegments(segmentsArr);
 	plotNewRoute(routeSegments);
 	//toMultiLineString
@@ -102,6 +69,17 @@ function setShapes(newRoute,tripData){
 		return longestTrip;
 	 }
 
+	function getTrueStops(lineStrings,stops){
+		var trueStops = [];
+		lineStrings.coordinates.forEach(function(d){
+			var array = getSet(d,stops);
+			array.forEach(function(stop){
+				trueStops.push(stop);
+			});
+		});
+		return trueStops;
+	}
+
 	function mergeSegments(SegmentList){
 		var mergedFeatureCollection = {
 			type:'FeatureCollection',
@@ -112,6 +90,7 @@ function setShapes(newRoute,tripData){
 				mergedFeatureCollection.features.push(feature);
 			})
 		})
+		console.log(mergedFeatureCollection);
 		return mergedFeatureCollection
 	}
 	function toMultiLineString(FeatureCollection){
@@ -135,9 +114,30 @@ function setShapes(newRoute,tripData){
 	function plotNewRoute(featureCollection){
 		d3.select("#plot").selectAll("path").data(featureCollection.features)
 				.enter().append("path")
-				.attr("id",function(d){ return "route_"+d.properties.route_id+"_s_"
+				.attr("id",function(d){ 
+				var str;
+				if(d.start.properties.station_name.indexOf("junction") >=0 &&
+					d.end.properties.station_name.indexOf("junction") >=0){
+					str = "route_"+d.properties.route_id+"_s_"
+					+d.start.properties.station_name+"_e_"+d.end.properties.station_name;	
+					}
+				else if(d.start.properties.station_name.indexOf("junction") >=0){
+					str =  "route_"+d.properties.route_id+"_s_"
+					+d.start.properties.station_name+"_e_"+d.end.properties.stop_ids[0].substring(0,3);
+				}
+				else if(d.end.properties.station_name.indexOf("junction") >=0){
+					str = "route_"+d.properties.route_id+"_s_"
+					+d.start.properties.stop_ids[0].substring(0,3)+"_e_"+d.end.properties.station_name;
+				}
+				else{
+					str = "route_"+d.properties.route_id+"_s_"
 					+d.start.properties.stop_ids[0].substring(0,3)+"_e_"+d.end.properties.stop_ids[0].substring(0,3);
-					;})
+				}
+				return str;
+				
+				;})
+
+
 				.style("stroke",function(d){return "#"+d.properties.route_color;})
 				.attr("d",path); 			
 	}
@@ -181,9 +181,9 @@ function setShapes(newRoute,tripData){
 	}
 	function findStop(stopcoor,lineString){
 		var index = -1;
-		
 			lineString.forEach(function(coor,i){
-				if(distance(coor,stopcoor) === 0){
+				var d = distance(coor,stopcoor);
+				if(d === 0){
 					index = i;
 					
 				}
@@ -214,7 +214,7 @@ function setShapes(newRoute,tripData){
 		    var i = 0;								
 		    var len = realStops.length;
 		    										//get initial points
-		    for(var i = 0; i < len; i++){			//for now only worry about the first line string
+		    for(var i = 0; i < len; i++){			
 		    	var s1 = realStops[i].geometry.coordinates;						//get coordinates from first stop
 		    	var array = lineString;					//get only the first line string
 		    	var s2 = (i<len-1)? realStops[i+1].geometry.coordinates : array.length;	//get next stops coordinates
@@ -227,48 +227,59 @@ function setShapes(newRoute,tripData){
 		    		stop2 = findStop(s2,array);	
 		    	}
 		    	range = getRange(array,stop1,stop2);		//get the range of points between the two stops on line string
+
 		    	if(range.length !== 0)						//if there is anything in the range 
 		    		lines.push(range);						//add it to the list of lines
 		    	var obj = {'type':'Feature','properties':newRoute.properties,'geometry':{'type':'LineString','coordinates':range},'start':realStops[i]};
-		    	if(i<len-1)
+		    	if(i<len-1){
 		    		obj["end"] = realStops[i+1];
+		    		graph.addEdge(obj.start.properties.stop_ids[0].substring(0,3),obj.end.properties.stop_ids[0].substring(0,3));
+		    	}
 		    	else
-		    		obj["end"] = obj.start;
+		    		obj["end"] = {'type':'Feature','properties':{'station_name':realStops[i].properties.station_name , 'stop_ids':['end','end']}, 'geometry':realStops[i].geometry};
 		    	routeSegments.features.push(obj);
 		    }
 		    
 		   // var mls = {'type':'Feature','properties':newRoute.properties, 'geometry':{'type':'MultiLineString', 'coordinates':lines}}; 
 		    
-		   console.log(realStops);
-		   
+
 		    
 		    
 		    return routeSegments;
 		}
 
-		function healWithLongestTrip(segments,longestTrip,stops){
-			
+		function healWithLongestTrip(segments,longestTrip,realStops){
+				console.log(longestTrip);
 				var len = longestTrip.length;
 				var newFeatures = [];
-				for(var i = 0; i < len; i++){
-					
+				for(var i = 0; i < len-1; i++){
+					var endStop;
 					seg1 = getSegment(longestTrip[i].stop_id,segments);         		//get segment of the first stop
 					seg2 = (i<len-1)? getSegment(longestTrip[i+1].stop_id,segments) : seg1;     //get segment of the second stop
 					
 					if(seg1 != seg2){		//if they are not on the same segment: join segments
-					// console.log(longestTrip[i].stop_id,longestTrip[i+1].stop_id)
-					// console.log(seg1,seg2)
-					var id1 = longestTrip[i].stop_id, id2 = longestTrip[i+1].stop_id;
+						var endStop;
+						realStops.forEach(function(d){
+						
+						if(d.properties.stop_ids[0].substring(0,3) === longestTrip[i+1].stop_id.substring(0,3) )
+							endStop = d;
+						});
+
+
+						var id1 = longestTrip[i].stop_id, id2 = longestTrip[i+1].stop_id;
 						//var lineStringAfterCurStop = searchStarts(longestTrip[i],segments[seg1]);
 						var pair = findClosestPair(segments[seg1],segments[seg2]);
+						
+						
 						var feature = {type:'Feature', geometry:{coordinates:pair,type:'LineString'},properties:newRoute.properties,
-										start:{geometry:{coordinates:pair[0],type:'Point'}, properties:{routes:[segments[seg1].properties],station_name:'junction_'+id1+'_'+id2,stop_ids:[id1+'_'+id2]}, type:'Feature'},
-										end:{geometry:{coordinates:pair[1],type:'Point'}, properties:{routes:[segments[seg2].properties],station_name:'junction_'+id2+'_'+id1,stop_ids:[id2+'_'+id1]}, type:'Feature'}    }
+										start:{geometry:{coordinates:pair[0],type:'Point'}, properties:{routes:[segments[seg1].properties],station_name:'junction_'+id1+'_'+id2,stop_ids:[id1+'_'+id2],stop_id:id1+'_'+id2}, type:'Feature'},
+										end:endStop/*{geometry:{coordinates:pair[1],type:'Point'}, properties:{routes:[segments[seg2].properties],station_name:'junction_'+id2+'_'+id1,stop_ids:[id2+'_'+id1],stop_id:id2+'_'+id1}, type:'Feature'}*/    }
 						Stops.push(feature.start);
-						Stops.push(feature.end);
+						//Stops.push(feature.end);
 						newFeatures.push(feature.start);
-						newFeatures.push(feature.end);
-						segments[seg1].features.push(feature);
+						//newFeatures.push(feature.end);
+						graph.addEdge(feature.start.properties.stop_ids[0],feature.end.properties.stop_ids[0].substring(0,3));
+						//segments[seg1].features.push(feature);
 						segments[seg2].features.push(feature);
 					}
 				}
@@ -279,7 +290,7 @@ function setShapes(newRoute,tripData){
 					.attr("transform",function(d){
 						return "translate("+projection(d.geometry.coordinates)+")"
 					})
-					.attr("r","2.5")
+					.attr("r","1")
 					.style("fill","green")
 					.style("stroke","black");
 			
@@ -329,6 +340,25 @@ function setShapes(newRoute,tripData){
 				})
 			})
 			return index;
+		}
+		function compBuilder(newRoute){
+			var segmentArr = newRoute.geometry.coordinates;
+			return function(p1,p2){
+				var retval = false;
+				segmentArr.forEach(function(multiline){
+					var p1InSegment = false;
+					multiline.forEach(function(point){
+						p1InSegment = (distance(p1,point) === 0) || p1InSegment;
+					});
+					var p2InSegment = false;
+					multiline.forEach(function(point){
+						p2InSegment = (distance(p2,point) === 0) || p2InSegment;
+
+					});
+					retval = (p1InSegment && p2InSegment) || retval;
+				});
+				return retval;
+			}
 		}
 }
 function distance(a,b){
