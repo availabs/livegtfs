@@ -78,7 +78,8 @@
 			v2AdjList.swap(v1,bridge);
 			if(!bridgeAdjList.list.exists(v1))
 				this.adjacencyLists[bridge].list.add(v1);
-			if(!bridgeAdjList.lists.exists(v2))
+			if(!bridgeAdjList.list.exists(v2))
+
 				this.adjacencyLists[bridge].list.add(v2);
 				
 		}else{
@@ -87,9 +88,10 @@
 	}
 
 	Graph.prototype.getAdjacencies = function(vertex){
-		var adjList = this.getAdjacencies[vertex] || (new LinkedList());
+
+		var adjList = this.adjacencyLists[vertex] || (new LinkedList());
 		var array = [];
-		tracer = adjList.listHead;
+		tracer = adjList.list.listHead;
 		while(tracer){  //while tracer isn't null
 			array.push(tracer.data);
 			tracer = tracer.next;
@@ -97,24 +99,55 @@
 		return array;
 	}
 
-	Graph.prototype.bfs = function(start,end){
-// 		var START = start;
-// 		function depthFirstSearch(currentPoint,end,list){
-// 			var adjList = this.adjacencyLists[currentPoint];
-// 			if(adjList.exists(end))                  //if end is adjacent to our current point
-// 			{
-// 				list.push(end);
-// 				return list;
-// 			}else{  // if it is not adjacent then we must search the paths adjacent to those another level beyond
-// 				list.push(adjList.listHead);
-// 				depthFirstSearch(adjList.listHead)
-// 			}
-// 		}
 
+	function dfs(Graph,start,end){
+		var stack = new Stack();
+		stack.push(start);
+		var seenList = [];
+		seenList.push(start);
+		var parents = {};
+		if(start === end){
+			return [];
+		}
+		while(stack !== []){
+			current = stack.pop();  //get the top of the stack
+			if(current === end){	//if we found our point 
+				var pathStack = [end];
+				var child = end,parent = parents[child];
+				pathStack.unshift(parent);	
+				while(parent !== start){	//recreate path traversed with backwards parent map
+				 	child = parent;
+					parent = parents[child] || null;
+					pathStack.unshift(parent);
+				}
+				return pathStack;		//return the stack
+			}
+			//if not get the adjacencies of current node
+			var adjacencies = Graph.getAdjacencies(current); //get the Adjacencies of the current node
+			seenList.push(current);  //mark it as seen
+			for(var i=0; i< adjacencies.length; i++){  //for every node adjacent push it on the stack if unseen
+				if(seenList.indexOf(adjacencies[i]) < 0){
+					seenList.push(adjacencies[i]);
+					stack.push(adjacencies[i]);
+					parents[adjacencies[i]] = current;
+				}
+			}
+		}
 	}
 
-
-	
+var Stack = function(){
+	this.stack = [];
+}
+Stack.prototype={
+	length:function(){return this.stack.length;},
+	push:  function(obj){this.stack.push(obj);},
+	pop:   function(){
+				var ret = this.stack[this.length()-1];
+				this.stack = this.stack.slice(0,this.length()-1);
+	 			return ret;
+	 			},
+	toList: 	function(){ return this.stack;}
+}
 
 
 
@@ -192,7 +225,6 @@ LinkedList.prototype.swap = function(el, newEl){
 		tracer = tracer.next;
 	}
 
-	//if there was no match do nothing
 }
 
 

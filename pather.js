@@ -46,7 +46,7 @@ function setShapes(newRoute,tripData){
 	var segmentsArr = getAllLines(newRoute.geometry,realStops);
 	console.log(segmentsArr)
 	
-	var longestTrip = maxLen(tripData);
+	var longestTrip = tripData["B20140608WKD_001150_A..S74R"]//maxLen(tripData);
 	healWithLongestTrip(segmentsArr,longestTrip,realStops);
 	routeSegments = mergeSegments(segmentsArr);
 	plotNewRoute(routeSegments);
@@ -90,7 +90,6 @@ function setShapes(newRoute,tripData){
 				mergedFeatureCollection.features.push(feature);
 			})
 		})
-		console.log(mergedFeatureCollection);
 		return mergedFeatureCollection
 	}
 	function toMultiLineString(FeatureCollection){
@@ -112,22 +111,25 @@ function setShapes(newRoute,tripData){
 		return LIST;
 	}
 	function plotNewRoute(featureCollection){
-		d3.select("#plot").selectAll("path").data(featureCollection.features)
+		console.log(featureCollection);
+		var plot = d3.select("#plot");
+		var paths = plot.selectAll("path");
+		paths.data(featureCollection.features)
 				.enter().append("path")
 				.attr("id",function(d){ 
 				var str;
 				if(d.start.properties.station_name.indexOf("junction") >=0 &&
 					d.end.properties.station_name.indexOf("junction") >=0){
 					str = "route_"+d.properties.route_id+"_s_"
-					+d.start.properties.station_name+"_e_"+d.end.properties.station_name;	
+					+d.start.properties.stop_ids[0]+"_e_"+d.end.properties.stop_ids[0];	
 					}
 				else if(d.start.properties.station_name.indexOf("junction") >=0){
 					str =  "route_"+d.properties.route_id+"_s_"
-					+d.start.properties.station_name+"_e_"+d.end.properties.stop_ids[0].substring(0,3);
+					+d.start.properties.stop_ids[0]+"_e_"+d.end.properties.stop_ids[0].substring(0,3);
 				}
 				else if(d.end.properties.station_name.indexOf("junction") >=0){
 					str = "route_"+d.properties.route_id+"_s_"
-					+d.start.properties.stop_ids[0].substring(0,3)+"_e_"+d.end.properties.station_name;
+					+d.start.properties.stop_ids[0].substring(0,3)+"_e_"+d.end.properties.stop_ids[0];
 				}
 				else{
 					str = "route_"+d.properties.route_id+"_s_"
@@ -135,10 +137,12 @@ function setShapes(newRoute,tripData){
 				}
 				return str;
 				
-				;})
+				})
 
 
-				.style("stroke",function(d){return "#"+d.properties.route_color;})
+				.style("stroke",function(d){
+					return "#888888";
+					})
 				.attr("d",path); 			
 	}
 
@@ -248,6 +252,36 @@ function setShapes(newRoute,tripData){
 		    return routeSegments;
 		}
 
+		function mendPath(firstStop,newStop,segments,index){
+			var start = firstStop;
+			var segment1 = getSegment(firstStop,segments);
+			var linestring;
+			segments[segment1].features.forEach(function(line){
+				if(line.start.properties.stop_ids[0].substring(0,3) === start.substring(0,3))
+					linestring = line;
+			});
+				start = linestring.start; 
+				if(linestring.geometry.coordinates.length > 0){
+				var end = linestring.end;
+				var array = linestring.geometry.coordinates;
+				var s = 0;
+				var j = index;
+				var e = array.length;
+				var range = array.slice(s,j); 
+				var line1 = {type:'Feature',geometry:{coordinates:range,type:'LineString'},properties:newRoute.properties,
+							start:start,end:newStop.start};
+				segments[segment1].features.push(line1);
+
+				graph.addEdge(start.properties.stop_ids[0].substring(0,3),newStop.start.properties.stop_ids[0]);
+
+				var range2 = array.slice(j,e);
+				var line2 = {type:'Feature',geometry:{coordinates:range2,type:'LineString'},properties:newRoute.properties,
+							start:newStop.start,end:end};
+				segments[segment1].features.push(line2); 
+
+				graph.addEdge(newStop.start.properties.stop_ids[0],end.properties.stop_ids[0].substring(0,3));
+			}
+		}
 		function healWithLongestTrip(segments,longestTrip,realStops){
 				console.log(longestTrip);
 				var len = longestTrip.length;
@@ -258,6 +292,7 @@ function setShapes(newRoute,tripData){
 					seg2 = (i<len-1)? getSegment(longestTrip[i+1].stop_id,segments) : seg1;     //get segment of the second stop
 					
 					if(seg1 != seg2){		//if they are not on the same segment: join segments
+					console.log(segments[seg1],segments[seg2]);
 						var endStop;
 						realStops.forEach(function(d){
 						
@@ -266,17 +301,18 @@ function setShapes(newRoute,tripData){
 						});
 
 
-						var id1 = longestTrip[i].stop_id, id2 = longestTrip[i+1].stop_id;
+						var stopid1 = longestTrip[i].stop_id, stopid2 = longestTrip[i+1].stop_id;
+						var id1 = stopid1.substring(0,3),id2 = stopid2.substring(0,3)
 						//var lineStringAfterCurStop = searchStarts(longestTrip[i],segments[seg1]);
 						var pair = findClosestPair(segments[seg1],segments[seg2]);
-						
+						var index = pair[2];
 						
 						var feature = {type:'Feature', geometry:{coordinates:pair,type:'LineString'},properties:newRoute.properties,
 										start:{geometry:{coordinates:pair[0],type:'Point'}, properties:{routes:[segments[seg1].properties],station_name:'junction_'+id1+'_'+id2,stop_ids:[id1+'_'+id2],stop_id:id1+'_'+id2}, type:'Feature'},
 										end:endStop/*{geometry:{coordinates:pair[1],type:'Point'}, properties:{routes:[segments[seg2].properties],station_name:'junction_'+id2+'_'+id1,stop_ids:[id2+'_'+id1],stop_id:id2+'_'+id1}, type:'Feature'}*/    }
 						Stops.push(feature.start);
+						mendPath(stopid1,feature,segments,index);//add a path on each side of the junction to bridge
 						//Stops.push(feature.end);
-						newFeatures.push(feature.start);
 						//newFeatures.push(feature.end);
 						graph.addEdge(feature.start.properties.stop_ids[0],feature.end.properties.stop_ids[0].substring(0,3));
 						//segments[seg1].features.push(feature);
@@ -290,7 +326,7 @@ function setShapes(newRoute,tripData){
 					.attr("transform",function(d){
 						return "translate("+projection(d.geometry.coordinates)+")"
 					})
-					.attr("r","1")
+					.attr("r","2.5")
 					.style("fill","green")
 					.style("stroke","black");
 			
@@ -302,12 +338,12 @@ function setShapes(newRoute,tripData){
 			var pair;
 			segment1.features.forEach(function(d){
 				segment2.features.forEach(function(ls){
-					d.geometry.coordinates.forEach(function(coor1){
-						ls.geometry.coordinates.forEach(function(coor2){
+					d.geometry.coordinates.forEach(function(coor1,x){
+						ls.geometry.coordinates.forEach(function(coor2,y){
 							var dist = distance(coor1,coor2);
 							if(minDist > dist){
 								minDist = dist;
-								pair = [coor1,coor2];
+								pair = [coor1,coor2,x,y];
 						}
 					})
 					})
