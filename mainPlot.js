@@ -124,18 +124,19 @@ function getTripData(Route_ID,Day,AgencyID,Element){
 					tripData[d.trip_id] = []
 				tripData[d.trip_id].push(d);				
 			})
-		var froute = plotter(Route_ID);
-		setTrips(tripData,Element,froute);
+		var trip_id = "B20140608WKD_001150_A..S74R";
+		var froute = plotter(Route_ID,trip_id);
+		setTrip(tripData,Element,froute,trip_id);
 	})
 }
 
 
 
-function plotter(id){
+function plotter(id,trip_id){
 	var newRoutes = [];
 	//console.log(Routes);
 
 	var	newroute = getStops(id, Routes, pathcoll);
-	var finalRoute = setShapes(newroute,tripData);
+	var finalRoute = setShapes(newroute,tripData,trip_id);
 	return finalRoute;
 }

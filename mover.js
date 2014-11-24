@@ -43,8 +43,6 @@ function moveTrip(value,map,trip,intervals){
 	}
 	if(interval){
 		var path1 = d3.select("#"+interval.lineID).node();
-		if(interval.start_id === "A61_H02")
-			interval.start_id = "A61_H02"
 		if(path1 == null)
 		{
 			console.log("problems");
@@ -62,18 +60,18 @@ function moveTrip(value,map,trip,intervals){
 	}
 }
 
-function setTrips(tripData,Element,froute){
+function setTrip(tripData,Element,froute,trip_id){
 	// console.log(tripData);
 	TheRoute = froute;
 	getJunctions = findJunctions(TheRoute);
-	var TestTrip = tripData["B20140608WKD_001150_A..S74R"];
+	var TestTrip = tripData[trip_id];
 	var trip;
 	console.log(TestTrip);
 	start = TestTrip[0].arrival_time;
 	end = TestTrip[TestTrip.length-1].arrival_time;
 	var intervals = getIntervals(TestTrip,TheRoute);
 	console.log(intervals);
-	trip = getTrip("B20140608WKD_001150_A..S74R",TestTrip[0].stop_id,froute,intervals);
+	trip = getTrip(trip_id,TestTrip[0].stop_id,froute,intervals);
 	buildSlider(Element,start,end,trip,intervals);
 
 }
@@ -111,10 +109,7 @@ function getIntervals(oneTripsData,RouteData){
 		}
 		else{
 			var junction =  findEndJunction(timeObj.stop_id); //if there is a junction update graph
-			//AUGMENT GRAPH//
-			//graph.bridgeVerticies(timeObj.start_id,junction.start.properties.stop_id,timeObj.stop_id);
-
-			//END AUGMENT GRAPH//
+		
 			var timeArr = []; //prepare an array of time objects;
 			var realRoute = dfs(graph,timeObj.start_id,timeObj.stop_id);
 			console.log(realRoute);
@@ -129,7 +124,7 @@ function getIntervals(oneTripsData,RouteData){
 			var len = timeArr.length;
 			var start = parseTime(timeObj.start);
 			var end = parseTime(timeObj.stop);
-			var tmap = d3.time.scale().domain([0,len-1]).range([start,end]);
+			var tmap = d3.time.scale().domain([0,len]).range([start,end]);
 			var form = d3.time.format("%X");
 			for (var j = 0; j< len; j++){
 				timeArr[j].start = form(new Date(tmap(j)) );
@@ -138,32 +133,6 @@ function getIntervals(oneTripsData,RouteData){
 			}
 
 			console.log(timeArr);
-// 			var timeObj1={};
-// 			timeObj1.start_id = timeObj.start_id;
-// 			timeObj1.start = timeObj.start;
-// 			timeObj1.stop_id = junction.station_name;
-// 			//divide the time into partitions of the lineString
-// 			var path = d3.select("#"+timeObj.lineID).node();
-// 			var date1 = parseTime(timeObj.start);
-// 			var date2 = parseTime(timeObj.stop);
-// 			var fraction = Math.ceil( (date1.getTime() + date2.getTime())/2);
-// 			var form = d3.time.format("%X");
-// 			var newTime = form(new Date(fraction));
-// 			timeObj1.stop = newTime;
-// 			timeObj1.lineID = "route_A_s_"+timeObj1.start_id+"_e_"+timeObj1.stop_id;
-// 			var timeObj2 ={};
-// 			timeObj.start_id = timeObj1.stop_id;
-// 			timeObj2.start = newTime;
-// 			timeObj2.stop_id = timeObj.stop_id;
-// 			timeObj2.stop = timeObj.stop;
-// 			timeObj2.lineID = "route_A_s_"+timeObj2.start_id+"_e_"+timeObj2.stop_id;
-			
-// 			intervals.push(timeObj1);
-// 			intervals.push(timeObj2);
-// 			//console.log(junction);
-
-
-			
 		}
 	}
 	console.log(intervals);

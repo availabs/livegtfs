@@ -32,7 +32,27 @@ function getStops(route_id, Routes,pathCollection){
 	return curRoute;
 }
 
-function setShapes(newRoute,tripData){
+function buildGraph(routeSegments){
+
+	routeSegments.features.forEach(function(seg){
+		graph.addEdge(seg.start.properties.stop_ids[0].substring(0,3),
+						seg.end.properties.stop_ids[0].substring(0,3));
+	})
+
+}
+
+function reverseSegments(Segments){
+	var revsegs = JSON.parse(JSON.stringify(Segments));// make deep copy of segments
+	revsegs.features.forEach(function(feature){
+		feature.geometry.coordinates.reverse(); //reverse the ordering of the points
+		var temp = feature.end;
+		feature.end = feature.start;
+		feature.start = temp;
+	})
+	return revsegs;
+
+}
+function setShapes(newRoute,tripData,trip_id){
 	var currentBin,index;
 	inSameSegment = compBuilder(newRoute);
 	var routeSegments = {
@@ -46,12 +66,13 @@ function setShapes(newRoute,tripData){
 	var segmentsArr = getAllLines(newRoute.geometry,realStops);
 	console.log(segmentsArr)
 	
-	var longestTrip = tripData["B20140608WKD_001150_A..S74R"]//maxLen(tripData);
+	var longestTrip = tripData[trip_id];//maxLen(tripData);
 	healWithLongestTrip(segmentsArr,longestTrip,realStops);
 	routeSegments = mergeSegments(segmentsArr);
+	//buildGraph(routeSegments);
 	plotNewRoute(routeSegments);
 	//toMultiLineString
-	 return routeSegments;
+	return routeSegments;
 
 	 function maxLen(tripData){
 		var longestTrip;
@@ -114,6 +135,8 @@ function setShapes(newRoute,tripData){
 		console.log(featureCollection);
 		var plot = d3.select("#plot");
 		var paths = plot.selectAll("path");
+		var revFeatureCollection = reverseSegments(featureCollection);
+		featureCollection.features = featureCollection.features.concat(revFeatureCollection.features);
 		paths.data(featureCollection.features)
 				.enter().append("path")
 				.attr("id",function(d){ 
@@ -143,7 +166,9 @@ function setShapes(newRoute,tripData){
 				.style("stroke",function(d){
 					return "#888888";
 					})
-				.attr("d",path); 			
+				.attr("d",
+				path
+				); 			
 	}
 
 	   
@@ -307,13 +332,13 @@ function setShapes(newRoute,tripData){
 						var pair = findClosestPair(segments[seg1],segments[seg2]);
 						var index = pair[2];
 						
-						var feature = {type:'Feature', geometry:{coordinates:pair,type:'LineString'},properties:newRoute.properties,
+						var feature = {type:'Feature', geometry:{coordinates:pair.slice(0,2),type:'LineString'},properties:newRoute.properties,
 										start:{geometry:{coordinates:pair[0],type:'Point'}, properties:{routes:[segments[seg1].properties],station_name:'junction_'+id1+'_'+id2,stop_ids:[id1+'_'+id2],stop_id:id1+'_'+id2}, type:'Feature'},
 										end:endStop/*{geometry:{coordinates:pair[1],type:'Point'}, properties:{routes:[segments[seg2].properties],station_name:'junction_'+id2+'_'+id1,stop_ids:[id2+'_'+id1],stop_id:id2+'_'+id1}, type:'Feature'}*/    }
 						Stops.push(feature.start);
 						mendPath(stopid1,feature,segments,index);//add a path on each side of the junction to bridge
-						//Stops.push(feature.end);
-						//newFeatures.push(feature.end);
+						Stops.push(feature.end);
+						newFeatures.push(feature.end);
 						graph.addEdge(feature.start.properties.stop_ids[0],feature.end.properties.stop_ids[0].substring(0,3));
 						//segments[seg1].features.push(feature);
 						segments[seg2].features.push(feature);
@@ -329,6 +354,7 @@ function setShapes(newRoute,tripData){
 					.attr("r","2.5")
 					.style("fill","green")
 					.style("stroke","black");
+
 			
 		}
 		//for right now bruteforce, there is a better algorithm to do this however

@@ -12,7 +12,8 @@
 	};
 
 	AdjacencyList.prototype.add = function(obj){
-		this.list.add(obj);
+		if(!this.list.exists(obj))
+			this.list.add(obj);
 	}
 	AdjacencyList.prototype.remove = function(obj){
 		this.list.remove(obj);
