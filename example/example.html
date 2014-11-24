@@ -1,0 +1,114 @@
+<!--TransitPlotter.html-->
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<style>
+path{
+  
+  stroke-width:1pt;
+  stroke:#000;
+  fill:none;
+}
+
+path[id*="#route_A"]{
+  stroke-width:8px;
+  opacity: 0.2
+}
+
+path:hover{
+  stroke-width:16px;
+}
+
+.station {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+/* Creates a small triangle extender for the tooltip */
+.station:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  float:left;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.station.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+.axis {
+  font: 10px sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.axis .domain {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .3;
+  stroke-width: 10px;
+  stroke-linecap:round;
+}
+
+.axis .halo {
+  fill: none;
+  stroke: #ddd;
+  stroke-width: 8px;
+  stroke-linecap: round;
+}
+
+.slider .handle {
+  fill: #fff;
+  stroke: #000;
+  stroke-opacity: .5;
+  stroke-width: 1.25px;
+  pointer-events: none;
+}
+
+.slider:hover {
+  fill:#f00;
+}
+#clock{
+  margin-bottom:0px;
+  padding:0px;
+  clear:both;
+  
+  position:relative;
+  height:50px;
+  text-align:center;
+}
+
+</style>
+<script src="../bower_components/d3/d3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="../bower_components/d3-tip/index.js"></script>
+
+
+<script src="examplePlot.js"></script>
+
+<!--<script src="bower_components/jquery/dist/jquery.min.js"></script> -->
+
+<script>
+
+
+  var mapdiv = d3.select("body").append("div");
+  mapdiv.attr("id","mapdiv");
+  mapdiv.style("float:left");
+  getGraphData(mapdiv,109);
+
+
+ 
+
+</script>

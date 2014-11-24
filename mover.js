@@ -33,7 +33,7 @@ function parseTime(s) {
 	  return t;
 }
 
-function moveTrip(value,map,trip,intervals){
+function moveTrip(value,map,intervals){
 	
 	var interval;
 	for(var i =0; i< intervals.length; i++){
@@ -60,6 +60,10 @@ function moveTrip(value,map,trip,intervals){
 	}
 }
 
+function getInitialTrips(Intervals){
+	var tripArray; 
+}
+
 function setTrip(tripData,Element,froute,trip_id){
 	// console.log(tripData);
 	TheRoute = froute;
@@ -69,10 +73,10 @@ function setTrip(tripData,Element,froute,trip_id){
 	console.log(TestTrip);
 	start = TestTrip[0].arrival_time;
 	end = TestTrip[TestTrip.length-1].arrival_time;
-	var intervals = getIntervals(TestTrip,TheRoute);
+	var intervals = getIntervals(TestTrip,TheRoute,"route_A");
 	console.log(intervals);
-	trip = getTrip(trip_id,TestTrip[0].stop_id,froute,intervals);
-	buildSlider(Element,start,end,trip,intervals);
+	getTrip(trip_id,TestTrip[0].stop_id,froute,intervals);
+	buildSlider(Element,start,end,intervals);
 
 }
 
@@ -84,14 +88,26 @@ function findStop(stopPrefix){
 	return -1;
 }
 
-function getIntervals(oneTripsData,RouteData){
-	var TimeObj = function(){
+function getAllRouteIntervals(TripData,RouteData,route_id){
+	var idArray = Object.keys(TripData);
+	var tripIntervals = {};
+	idArray.forEach(function(id){
+		tripIntervals[id] = getIntervals(TripData[id],RouteData,route_id);
+	})
+	return tripIntervals;
+
+}
+
+var TimeObj = function(){
 		this.start_id='';
 		this.stop_id = '';
 		this.start='';
 		this.stop = '';
 		this.lineID = '';
 	}
+
+function getIntervals(oneTripsData,RouteData,route_id){
+	
 	var intervals = [];
 	for(var i =0; i< oneTripsData.length-1; i++){
 		var timeObj = new TimeObj;
@@ -99,7 +115,7 @@ function getIntervals(oneTripsData,RouteData){
 		timeObj.start = oneTripsData[i].departure_time;
 		timeObj.stop = oneTripsData[i+1].arrival_time;
 		timeObj.stop_id = oneTripsData[i+1].stop_id.substring(0,3);
-		timeObj.lineID = "route_A_s_" + timeObj.start_id +"_e_"+timeObj.stop_id;
+		timeObj.lineID = route_id+"_s_" + timeObj.start_id +"_e_"+timeObj.stop_id;
 
 		var stop1 = Stops[findStop(timeObj.start_id)].geometry.coordinates;
 		var stop2 = Stops[findStop(timeObj.stop_id)].geometry.coordinates;
@@ -112,13 +128,12 @@ function getIntervals(oneTripsData,RouteData){
 		
 			var timeArr = []; //prepare an array of time objects;
 			var realRoute = dfs(graph,timeObj.start_id,timeObj.stop_id);
-			console.log(realRoute);
 
 			for(var j =0; j< realRoute.length-1; j++){
 				var timeObja = new TimeObj();
 				timeObja.start_id = realRoute[j];
 				timeObja.stop_id = realRoute[j+1];
-				timeObja.lineID = "route_A_s_" + timeObja.start_id + "_e_" + timeObja.stop_id;
+				timeObja.lineID = route_id+"_s_" + timeObja.start_id + "_e_" + timeObja.stop_id;
 				timeArr.push(timeObja);
 			}
 			var len = timeArr.length;
@@ -131,11 +146,9 @@ function getIntervals(oneTripsData,RouteData){
 				timeArr[j].stop = form(new Date(tmap(j+1)) );
 				intervals.push(timeArr[j]);
 			}
-
-			console.log(timeArr);
 		}
 	}
-	console.log(intervals);
+
 	return intervals;
 }
 

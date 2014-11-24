@@ -9,7 +9,7 @@ function getMaxOfArray(numArray){
 	return Math.max.apply(null,numArray);
 }
 
-function buildSlider(Element,start,end,trip,intervals){
+function buildSlider(Element,start,end,intervals){
 
 	var formatTime = d3.time.format("%X");
 	var isClock = false;
@@ -88,7 +88,7 @@ function buildSlider(Element,start,end,trip,intervals){
 
 	  handle.attr("cy", y(value));
 	  setTime(value);
-	  moveTrip(value,y,trip,intervals);
+	  moveTrip(value,y,intervals);
 	}
 
 	function parseTime(s) {
