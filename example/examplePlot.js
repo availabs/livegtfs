@@ -167,8 +167,9 @@ function getTripData(Route_ID,Day,AgencyID,Element){
 				tripData[d.trip_id].push(d);				
 			})
 		var trip_id = "B20140608WKD_001150_A..S74R";
+		var trip_id2 = "B20140608WKD_002950_A..S74R";
 		var froute = plotter(Route_ID,trip_id);
-		setTrip(tripData,Element,froute,trip_id);
+		setTrip(tripData,Element,froute,trip_id,trip_id2);
 	})
 }
 

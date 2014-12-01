@@ -65,7 +65,6 @@ function setShapes(newRoute,tripData,trip_id){
 	trueStops = getTrueStops(newRoute.geometry,realStops);
 
 	var segmentsArr = getAllLines(newRoute.geometry,realStops);
-	console.log(segmentsArr)
 	
 	//healWithLongestTrip(segmentsArr,longestTrip,realStops);
 	routeSegments = mergeSegments(segmentsArr);
@@ -117,18 +116,18 @@ function setShapes(newRoute,tripData,trip_id){
 		return LIST;
 	}
 	function plotNewRoute(featureCollection){
-		console.log(featureCollection);
 		var plot = d3.select("#plot");
-		var paths = plot.selectAll("path");
+		var  route = featureCollection.features[0].properties.route_id;
+		var paths = plot.selectAll("path#"+route);
 		var revFeatureCollection = reverseSegments(featureCollection);
 		featureCollection.features = featureCollection.features.concat(revFeatureCollection.features);
 		paths.data(featureCollection.features)
 				.enter().append("path")
+				.attr("class",function(d){return "route_"+d.properties.route_id;})
 				.attr("id",function(d,i){ 
 				
-					str = "route_"+d.properties.route_id+"_s_"
+					str = "_s_"
 					+d.start.properties.stop_ids[0].substring(0,3)+"_e_"+d.end.properties.stop_ids[0].substring(0,3);
-					console.log(i,str);
 				return str;
 				
 				})
@@ -193,13 +192,16 @@ function setShapes(newRoute,tripData,trip_id){
 		
 		return index;
 	}
-	function findStopAtPoint(point,stoplist){
-		var index = -1;
+	function findStopsAtPoint(point,stoplist){
+		var list = [];
 		stoplist.forEach(function(d,i){	
 			if(distance(d.geometry.coordinates,point)===0)
-				index = i; 
+				{
+					list.push(i);
+				}
+				
 			})
-		return index;
+		return list;
 	}
 
 	function getSet(lineString,realStops){
@@ -214,12 +216,14 @@ function setShapes(newRoute,tripData,trip_id){
 	function getLines(lineString, realStops){
 
 		realStops = getSet(lineString,realStops);
-		var startIndex = findStopAtPoint(lineString[0],realStops);
-		var start = realStops[startIndex];
-		realStops.splice(startIndex,1); //remove the element;
+		var startIndexes = findStopsAtPoint(lineString[0],realStops);
+		var starts = [];
+		startIndexes.forEach(function(index){
+			starts.push(realStops[index]);
+		})
 		var routeSegments = {
-		type:'FeatureCollection',
-		features:[]
+			type:'FeatureCollection',
+			features:[]
 		};
 
 		var lines = []     						//array of linestrings
@@ -228,22 +232,31 @@ function setShapes(newRoute,tripData,trip_id){
 												//get initial points
 			var lastIndex = 0;
 			for(i = 0; i< lineString.length; i++){
-				var temp;
-				if( (temp = findStopAtPoint(lineString[i],realStops)) >=0 ){
+				var tempIndexes;
+				var temps = [];
+				if( (tempIndexes = findStopsAtPoint(lineString[i],realStops)).length !== 0 ){
+					
+					tempIndexes.forEach(function(index){
+						temps.push(realStops[index]);
+					})
+					
 					var range;
 					if(realStops === [])
 						range = [];
 					else
 						range = getRange(lineString,lastIndex, i);
-						lastIndex = i;
-					var obj = {'type':'Feature','properties':newRoute.properties,'geometry':{'type':'LineString','coordinates':range},'start':start};
-						obj['end'] = realStops[temp];
-						graph.addEdge(obj.start.properties.stop_ids[0].substring(0,3),obj.end.properties.stop_ids[0].substring(0,3));
-//						obj["end"] = {'type':'Feature','properties':{'station_name':start.properties.station_name , 'stop_ids':['end','end']}, 'geometry':start.geometry};	
-
-					routeSegments.features.push(obj);   //add that path to our list of segments;
-					start = realStops[temp];  //set the new starting node
-					realStops.splice(temp,1); //remove it from the search list;
+					lastIndex = i;
+					startIndexes.forEach(function(s,j){
+						tempIndexes.forEach(function(e,k){
+							var obj = {'type':'Feature','properties':newRoute.properties,'geometry':{'type':'LineString','coordinates':range},'start':starts[j]};
+							obj['end'] = temps[k];
+							graph.addEdge(obj.start.properties.stop_ids[0].substring(0,3),obj.end.properties.stop_ids[0].substring(0,3));
+							routeSegments.features.push(obj);   //add that path to our list of segments;
+						})
+					});
+					starts = temps;   //set the new starting node
+					startIndexes = tempIndexes;
+					
 				}
 			}
 								

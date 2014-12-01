@@ -90,10 +90,10 @@
 
 	Graph.prototype.getAdjacencies = function(vertex){
 
-		var adjList = this.adjacencyLists[vertex] || (new LinkedList());
+		var adjList = this.adjacencyLists[vertex] || (new AdjacencyList());
 		var array = [];
-		tracer = adjList.list.listHead;
-		while(tracer){  //while tracer isn't null
+		var tracer = adjList.list.listHead;
+		while(tracer != null){  //while tracer isn't null
 			array.push(tracer.data);
 			tracer = tracer.next;
 		}
@@ -134,6 +134,39 @@
 				}
 			}
 		}
+	}
+
+	function bfs(Graph,source,target){
+		var queue = [];      //initialize a queue
+		var set = [];   //initialize the list of seen verticies
+		var parents = {}
+		queue.push(source);  // push it on the queue 
+		set.push(source);  //push it on the of verticies that we are aware of
+
+		while( queue.length != 0 ){  //while the queue is not empty
+			var t = queue.splice(0,1)[0];   //get the first element in the queue
+			if(t === target){				//if the  current vertex is the one we are looking for stop
+				var pathStack = [target];
+				var child = target, parent = parents[child];
+				pathStack.unshift(parent);
+				while(parent !== source){
+					child = parent;
+					parent = parents[child];
+					pathStack.unshift(parent);
+				}
+				return pathStack;
+			}
+			var adjacencies = Graph.getAdjacencies(t);   // if not get the vertexes adjacent to this node
+			adjacencies.forEach(function(vert){          // for each of them
+				if(set.indexOf(vert) < 0){			 	 // if we are aware of them, ignore as they are already set to be evaluated 
+					queue.push(vert);					 // if not, add them to the queue
+					set.push(vert);						 // the set
+					parents[vert] = t;					 // and the mapping of parent nodes for reconstruction
+				}
+			});
+		}
+		console.log("No Match Found");
+		return [];
 	}
 
 var Stack = function(){
