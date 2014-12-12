@@ -32,7 +32,7 @@ function getStopData(Element,AgencyID,sliderCallback){
 		Stops = plotStops(stopGeo);
 		pathcoll = getPathCollection(Routes,Stops);
 		//Routes.forEach(function(route){
-			getTripData("A",Day,AgencyID,Element);
+		//	getTripData("A",Day,AgencyID,Element);
 		//})
 		
 	});	
@@ -51,7 +51,7 @@ function plotStops(StopData){
 				})
 
 	group.selectAll(".stationLabel")
-					.data(stops.features).enter().append("circle")
+					.data(stops.features).enter().append("circle").filter(function(d){return d.properties.stop_id.indexOf("F") ===0})
 					.attr("class",function(d){
 						var everyStation = " stationLabel";
 						var classes ="";
@@ -104,11 +104,11 @@ function plotGraph(Element,GeoData){
 				//translate our figure in the svg to upper left corner*/
 				group.attr("transform",function(){return "translate("+(0-x1+0.05*width)+","+(0-y1+0.05*height)+")";  });
 
-	// var paths = group.selectAll("path").data(geoJson.features)
-	// 				.enter().append("path")
-	// 				.attr("id",function(d){return "route_"+d.properties.route_id;})
-	// 				.style("stroke",function(d){return "#"+d.properties.route_color;})
-	// 				//paths.attr("d",path); 
+	var paths = group.selectAll("path").data(geoJson.features)
+					.enter().append("path").filter(function(d){return d.properties.route_id === "F"})
+					.attr("id",function(d){return "route_"+d.properties.route_id;})
+					.style("stroke",function(d){return "#"+d.properties.route_color;})
+					paths.attr("d",path); 
 	
 	return geoJson.features;
 }

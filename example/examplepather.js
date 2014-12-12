@@ -1,15 +1,17 @@
 //example pather.js
 //pather.js
-var inSameSegment;
-var graph = new Graph()
+var graph = newRGraph()
 function getPathCollection(routes,stations){
 	var pathCollection = []
 
 	routes.forEach(function(d,i,array){  //for each route
 		var pathElement = {pathID:d.properties.route_id, stations: []} //create a element for the collection
 		stations.forEach(function(station,i,array){   //search through the stations 
-			if(station.properties.routes[0] == d.properties.route_id)             //if one has the same id
-				pathElement.stations.push(station);   //add it to the element list
+			station.properties.routes.forEach(function(route){
+				if(route == d.properties.route_id)             //if one has the same id
+					pathElement.stations.push(station);   //add it to the element list	
+			})
+			
 		})
 		pathCollection.push(pathElement);			 //add the current element to the collection
 	})
@@ -33,15 +35,6 @@ function getStops(route_id, Routes,pathCollection){
 	return curRoute;
 }
 
-function buildGraph(routeSegments){
-
-	routeSegments.features.forEach(function(seg){
-		graph.addEdge(seg.start.properties.stop_ids[0].substring(0,3),
-						seg.end.properties.stop_ids[0].substring(0,3));
-	})
-
-}
-
 function reverseSegments(Segments){
 	var revsegs = JSON.parse(JSON.stringify(Segments));// make deep copy of segments
 	revsegs.features.forEach(function(feature){
@@ -53,9 +46,8 @@ function reverseSegments(Segments){
 	return revsegs;
 
 }
-function setShapes(newRoute,tripData,trip_id){
+function setShapes(newRoute){
 	var currentBin,index;
-	inSameSegment = compBuilder(newRoute);
 	var routeSegments = {
 		type:'FeatureCollection',
 		features:[]
@@ -66,11 +58,11 @@ function setShapes(newRoute,tripData,trip_id){
 
 	var segmentsArr = getAllLines(newRoute.geometry,realStops);
 	
-	//healWithLongestTrip(segmentsArr,longestTrip,realStops);
+
 	routeSegments = mergeSegments(segmentsArr);
-	//buildGraph(routeSegments);
+
 	plotNewRoute(routeSegments);
-	//toMultiLineString
+
 	return routeSegments;
 
 
@@ -107,8 +99,8 @@ function setShapes(newRoute,tripData,trip_id){
 	}
 
 	function getAllLines(MultiLineString,stops){
-		var LIST = []
-		MultiLineString.coordinates.forEach(function(d){
+		var LIST = []   
+		MultiLineString.coordinates.forEach(function(d,i){
 			if(d.length != 0)
 				LIST.push(getLines(d,stops));
 		})
@@ -118,7 +110,7 @@ function setShapes(newRoute,tripData,trip_id){
 	function plotNewRoute(featureCollection){
 		var plot = d3.select("#plot");
 		var  route = featureCollection.features[0].properties.route_id;
-		var paths = plot.selectAll("path#"+route);
+		var paths = plot.selectAll("#plot path#route_"+route);
 		var revFeatureCollection = reverseSegments(featureCollection);
 		featureCollection.features = featureCollection.features.concat(revFeatureCollection.features);
 		paths.data(featureCollection.features)
@@ -151,7 +143,7 @@ function setShapes(newRoute,tripData,trip_id){
 			var station = {'type':'Feature','properties':{'station_name':'' , 'stop_ids':[]}, 'geometry':stops[i].geometry};
 			for(var j=0; j< uniqueStations.length; j++){
 				exists = false;
-				if(uniqueStations[j].properties.station_name === stops[i].properties.stop_name){
+				if(uniqueStations[j].properties.stop_ids[0].substring(0,3) === stops[i].properties.stop_id.substring(0,3)){
 					uniqueStations[j].properties.stop_ids.push(stops[i].properties.stop_id)
 					exists = true;
 					break;
@@ -173,9 +165,9 @@ function setShapes(newRoute,tripData,trip_id){
 			start = 0;
 		}
 		retArray = [];
-		for( var i=start; i <= stop; i++){   //must enclude endpoints if it needs to interpolate!!!!!!
-			retArray.push(array[i]);
-		}
+		   //must include endpoints if it needs to interpolate!!!!!!
+		retArray = array.slice(start,stop+1);
+		
 		return retArray;
 	}
 	function findStop(stopcoor,lineString){
@@ -214,12 +206,11 @@ function setShapes(newRoute,tripData,trip_id){
 	   	}
 
 	function getLines(lineString, realStops){
-
-		realStops = getSet(lineString,realStops);
-		var startIndexes = findStopsAtPoint(lineString[0],realStops);
+ 		var trueStops = getSet(lineString,realStops);  ///get all stops that lie and the current lineString
+		var startIndexes = findStopsAtPoint(lineString[0],trueStops); //find all stops that lie and the initial point
 		var starts = [];
-		startIndexes.forEach(function(index){
-			starts.push(realStops[index]);
+		startIndexes.forEach(function(index){			
+			starts.push(trueStops[index]);				//for each one push it onto the stack of stops that need to be addressed
 		})
 		var routeSegments = {
 			type:'FeatureCollection',
@@ -227,30 +218,31 @@ function setShapes(newRoute,tripData,trip_id){
 		};
 
 		var lines = []     						//array of linestrings
-		var i = 0;								
-		var len = realStops.length;
+		var i = 0;							 	
+		var len = trueStops.length;				//the number of stops on this lineString;
 												//get initial points
 			var lastIndex = 0;
-			for(i = 0; i< lineString.length; i++){
-				var tempIndexes;
+			for(i = 0; i< lineString.length; i++){ //run through every point on the line string;
+				var tempIndexes;					//create temp vars to hold immediately subsequent stops
 				var temps = [];
-				if( (tempIndexes = findStopsAtPoint(lineString[i],realStops)).length !== 0 ){
+				if( (tempIndexes = findStopsAtPoint(lineString[i],trueStops)).length !== 0 ){ //find the stops at our current point if they exist
 					
 					tempIndexes.forEach(function(index){
-						temps.push(realStops[index]);
+						temps.push(trueStops[index]);			//push them on the stack
 					})
 					
-					var range;
-					if(realStops === [])
+					var range;									//create a range array to store points that lie between stops
+					if(trueStops === [])
 						range = [];
 					else
-						range = getRange(lineString,lastIndex, i);
+						range = getRange(lineString,lastIndex, i);//get the range of points on the lineString that lie between start and end points
 					lastIndex = i;
-					startIndexes.forEach(function(s,j){
-						tempIndexes.forEach(function(e,k){
+					startIndexes.forEach(function(s,j){			  //for each stop in the starting points
+						tempIndexes.forEach(function(e,k){		  //for each stop in the ending points   ... i.e. cross product
+							//create a lineString Feature object with the same properties as the route with current start and stop stations.
 							var obj = {'type':'Feature','properties':newRoute.properties,'geometry':{'type':'LineString','coordinates':range},'start':starts[j]};
 							obj['end'] = temps[k];
-							graph.addEdge(obj.start.properties.stop_ids[0].substring(0,3),obj.end.properties.stop_ids[0].substring(0,3));
+							graph.addEdgeToRoute(newRoute.properties.route_id,obj.start.properties.stop_ids[0].substring(0,3),obj.end.properties.stop_ids[0].substring(0,3));
 							routeSegments.features.push(obj);   //add that path to our list of segments;
 						})
 					});
@@ -330,5 +322,12 @@ function setShapes(newRoute,tripData,trip_id){
 		}
 }
 function distance(a,b){
-		return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) )
+	var d =  Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );
+	// if(d === 0)
+	// 	return d;
+	// if(d < 0.002){
+	// 	console.log("anomoly");
+	// 	return 0;
+	// }
+	return d;
 }

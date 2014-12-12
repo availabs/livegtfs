@@ -1,8 +1,4 @@
 // /*This  file will contain the main plotting logic for the transit maps */
-
-
-
-
 var HOST = "http://localhost:1337"
 var W_height=window.outerHeight,
 	W_width=window.outerWidth;
@@ -11,7 +7,7 @@ var currentAgency;
 var projection, path,
 geoJson, GeoData,Stops=[],Routes,pathcoll;
 
-var Day = "MONDAY";
+var Day = "TUESDAY";
 
 function getGraphData(Element,AgencyID){
 	//We use the availabs api to retrieve route data of specified id
@@ -34,9 +30,13 @@ function getStopData(Element,AgencyID){
 		stopGeo = data;
 		Stops = plotStops(stopGeo);
 		pathcoll = getPathCollection(Routes,Stops);
-		// //Routes.forEach(function(route){
-		 	getTripData("A",Day,AgencyID,Element);
-		//})
+		Routes.forEach(function(route){
+			if(route.geometry.coordinates.length > 0 && (/*route.properties.route_id==="F" ||*/ route.properties.route_id!=="5")){
+				tripSetter.setRequired(1);
+				getTripData(route.properties.route_id,Day,AgencyID,Element);	
+			}
+		 	
+		})
 		
 	});	
 }
@@ -61,11 +61,11 @@ function plotStops(StopData){
 				.attr("class",'station')
 				.offset([-10,0])
 				.html(function(d){
-					return "<strong>Station: </strong><span style='color:red'>" +d.properties.stop_name+"</span>";
+					return "<strong>Station: </strong><span style='color:red'>" +d.properties.stop_id+"</span>";
 				})
 
 	group.selectAll(".stationLabel")
-					.data(stops.features).enter().append("circle")
+					.data(stops.features).enter().append("circle").filter(function(d){return d.properties.stop_id.indexOf("5") ===0})
 					.attr("class",function(d){
 						var everyStation = " stationLabel";
 						var classes ="";
@@ -80,9 +80,9 @@ function plotStops(StopData){
 					})
 					.attr("r",function(d){
 						if(d.properties.stop_id.indexOf('j') <0)
-							return 1;
-						else 
 							return 3;
+						else 
+							return 0;
 					})
 					.style("fill","white")
 					.style("stroke","black");
@@ -133,49 +133,35 @@ function plotGraph(Element,GeoData){
 	});
 	console.log(Stops);
 	
-
-
-// 	group.selectAll("circle").data(circs.features)
-// 							.enter().append("circle")
-// 							.attr("transform",function(d){
-// 								return "translate("+projection(d.geometry.coordinates)+")"
-// 							})
-// 							.attr("id","j1")
-// 							.attr("r","3")
-// 							.style("fill","green")
-// 							.style("stroke","black");
-// 	var paths = group.selectAll("path").data(geoJson.features)
-// 					.enter().append("path")
-// 					.attr("id",function(d){return "route_"+d.properties.route_id;})
-// 					.style("stroke",function(d){return "#"+d.properties.route_color;})
-// 					paths.attr("d",path); 
-	
 	return geoJson.features;
 }
 
 
 
-tripData = {}
+
 function getTripData(Route_ID,Day,AgencyID,Element){
-	var tripURL = "sampleTrip.json";//HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
+	var tripURL = HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
 	d3.json(tripURL,function(err,data){
 		if(err) console.log(err);
+		var tripData = {};
+		var route_id = Route_ID;
 		var beenPlotted = false;
 			data.forEach(function(d){
-				if(!tripData[d.trip_id])
-					tripData[d.trip_id] = []
-				tripData[d.trip_id].push(d);				
+				var trip_id = d.trip_id.replace(d.trip_id.substring(d.trip_id.lastIndexOf('_'),d.trip_id.indexOf('.')+1),'_'+Route_ID+'.');
+				if(!tripData[trip_id])
+					tripData[trip_id] = []
+				tripData[trip_id].push(d);				
 			})
-		var trip_id = "B20140608WKD_001150_A..S74R";
-		var trip_id2 = "B20140608WKD_002950_A..S74R";
-		var froute = plotter(Route_ID,trip_id);
-		setTrip(tripData,Element,froute,trip_id,trip_id2);
+		var ids = Object.keys(tripData);
+		var trip_id = ids[0];
+		var trip_id2 = ids[1];
+		var froute = plotter(route_id);
+		tripSetter.setTrip(route_id,tripData,Element,froute,trip_id,trip_id2);
 	})
 }
 
 function findJunctions(feats){
 	var eqpts = [];
-
 	geoJson.features.forEach(function(d){
 		var matrix = d.geometry.coordinates; 					//we have a multiline string so we start with a matrix of points
 		for(var i = 0; i < matrix.length; i++){  		//loop through each linestring
@@ -184,10 +170,21 @@ function findJunctions(feats){
 					for(var jrunner=0; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
 						var a = matrix[i][irunner];
 						var b = matrix[j][jrunner];
-						if( Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) ) === 0){
-							var k =eqpts.length;
-							var f = {type:"Feature",geometry:{type:'Point',coordinates:a},properties:{station_name:'j'+k,stop_id:'j'+k,stop_name:'junction'+k,routes:[d.properties.route_id]}};
-							eqpts.push(f);
+						if( distance(a,b) === 0){
+							var index = -1;
+							eqpts.forEach(function(junc,i){
+								if(distance(junc.geometry.coordinates,a) === 0){
+									index = i;
+								}
+							})
+							if(index >= 0){
+								eqpts[index].properties.routes.push(d.properties.route_id); 
+							}else{
+								var k =eqpts.length;
+								var f = {type:"Feature",geometry:{type:'Point',coordinates:a},properties:{station_name:'j'+k,stop_id:'j'+k,stop_name:'junction'+k,routes:[d.properties.route_id]}};
+								eqpts.push(f);	
+							}
+							
 						}
 					}
 				}
@@ -199,11 +196,15 @@ function findJunctions(feats){
 	return eqpts;
 }
 
-function plotter(id,trip_id){
+function distance(a,b){
+	return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );
+}
+
+function plotter(id){
 	var newRoutes = [];
 	//console.log(Routes);
 
 	var	newroute = getStops(id, Routes, pathcoll);
-	var finalRoute = setShapes(newroute,tripData,trip_id);
+	var finalRoute = setShapes(newroute);
 	return finalRoute;
 }

@@ -1,6 +1,40 @@
 
-
-
+var newRGraph = function(){
+	var RouteGraphs = {
+		numRoutes:0,
+		Routes:{},
+		addRoute:function(route_id){
+			if(!this.Routes[route_id]){
+				this.Routes[route_id] = new Graph();
+				this.numRoutes++;
+			}
+		},
+		printRouteGraph:function(route_id){
+			if(this.Routes[route_id])
+				this.Routes[route_id].toString();
+			else
+				console.log("Graph does not exist");
+		},
+		addEdgeToRoute:function(route_id,v1,v2){
+			this.addRoute(route_id);
+			this.Routes[route_id].addEdge(v1,v2);
+			return this;
+		},
+		getShortestPath:function(route_id,source,target){
+			var shortestPath;
+			if(!this.Routes[route_id]){
+				return [];
+			}
+			else{
+				shortestPath = bfs(this.Routes[route_id],source,target);
+			}
+			return shortestPath;
+		}	
+	};
+	return RouteGraphs;
+}
+	
+	
 
 	var Graph = function(){
 		this.numEdges  = 0;   //private variable for the number of edges
@@ -27,14 +61,14 @@
 	}
 
 	Graph.prototype.addEdge = function(vertex1,vertex2){  //This function will add an edge to the graph given its endpoints
-		// var vertex1 = new Vertex(v1)
-		// var vertex2 = new Vertex(v2);
-		this.adjacencyLists[vertex1] = this.adjacencyLists[vertex1] || new AdjacencyList();
-		this.adjacencyLists[vertex2] = this.adjacencyLists[vertex2] || new AdjacencyList();
+		if(vertex1 !== vertex2){
+			this.adjacencyLists[vertex1] = this.adjacencyLists[vertex1] || new AdjacencyList();
+			this.adjacencyLists[vertex2] = this.adjacencyLists[vertex2] || new AdjacencyList();
 
-		this.adjacencyLists[vertex1].add(vertex2);
-		this.adjacencyLists[vertex2].add(vertex1);
-		this.numEdges += 1;
+			this.adjacencyLists[vertex1].add(vertex2);
+			this.adjacencyLists[vertex2].add(vertex1);
+			this.numEdges += 1;
+		}
 		return this;
 	}
 
