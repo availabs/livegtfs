@@ -111,8 +111,8 @@ function setShapes(newRoute){
 				var plot = d3.select("#plot");
 				var  route = featureCollection.features[0].properties.route_id;
 				var paths = plot.selectAll("#plot path#route_"+route);
-				var revFeatureCollection = reverseSegments(featureCollection);
-				featureCollection.features = featureCollection.features.concat(revFeatureCollection.features);
+				// var revFeatureCollection = reverseSegments(featureCollection);
+				// featureCollection.features = featureCollection.features.concat(revFeatureCollection.features);
 				paths.data(featureCollection.features)
 						.enter().append("path")
 						.attr("class",function(d){return "route_"+d.properties.route_id;})

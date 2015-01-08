@@ -297,5 +297,5 @@
 			};
 			return RouteGraphs;
 		}
-
-module.exports ={'newRGraph':newRGraph};
+if(typeof module !== 'undefined')
+	module.exports ={'newRGraph':newRGraph};

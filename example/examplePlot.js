@@ -3,7 +3,6 @@ var HOST = "http://localhost:1337"
 var W_height=window.outerHeight,
 	W_width=window.outerWidth;
 
-var currentAgency;
 var projection, path,
 geoJson, GeoData,Stops=[],Routes,pathcoll;
 
@@ -27,8 +26,7 @@ function getStopData(Element,AgencyID){
 	var stops;
 	d3.json(stopUrl,function(err,data){
 		if(err) console.log(err);
-		stopGeo = data;
-		Stops = plotStops(stopGeo);
+		Stops = plotStops(data);
 		pathcoll = getPathCollection(Routes,Stops);
 		getTripData('route_id',Day,AgencyID,Element);
 		plotAllRoutes(Routes);
@@ -60,7 +58,7 @@ function plotStops(StopData){
 				})
 
 	group.selectAll(".stationLabel")
-					.data(stops.features).enter().append("circle")//.filter(function(d){return d.properties.stop_id.indexOf("sdf")===0})
+					.data(stops.features).enter().append("circle")//.filter(function(d){return d.properties.stop_id.indexOf("A")===0 || d.properties.stop_id.indexOf("H")===0})
 					.attr("class",function(d){
 						var everyStation = " stationLabel";
 						var classes ="";
@@ -99,7 +97,7 @@ function setup(Element,GeoData){
 	geoJson = GeoData;
 	projection = d3.geo.mercator()
             .center(GeoData.transform.translate)
-            .scale(25*scale)
+            .scale(50*scale)
             
     path = d3.geo.path().projection(projection);
     var x1,x2,y1,y2,bounds;
@@ -122,11 +120,7 @@ function setup(Element,GeoData){
 	eqpts.forEach(function(d){
 		Stops.push(d);
 	});
-	// var paths = group.selectAll("path").data(geoJson.features)
-	// 				.enter().append("path")//.filter(function(d){return d.properties.route_id === "F"})
-	// 				.attr("id",function(d){return "route_"+d.properties.route_id;})
-	// 				.style("stroke",function(d){return "#"+d.properties.route_color;})
-	// 				paths.attr("d",path); 
+	
 	
 	return geoJson.features;
 }
@@ -135,11 +129,11 @@ function setup(Element,GeoData){
 
 
 function getTripData(Route_ID,Day,AgencyID,Element){
-	var tripURL = /*'temp.json'//*/HOST+"/agency/routeData?id="+AgencyID+"&day="+Day;
+	var tripURL = /*'temp.json'//*/HOST+"/agency/"+AgencyID+"/day/"+Day+"/routeData";
 	d3.json(tripURL,function(err,data){
 		if(err) console.log(err);
-		var intervalStructure = data;
-		tripSetter.setTrip(Route_ID,'tripData',Element,'froute',intervalStructure);
+		var intervals = data;
+		tripSetter.setTrip(Route_ID,'tripData',Element,'froute',intervals);
 	})
 }
 
