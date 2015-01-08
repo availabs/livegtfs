@@ -29,26 +29,13 @@ function moveTrip(value,map,intervals){
 	var currentTrips = {};
 	var tripIntervalRanges = tripRanges.getRanges();
 	var keys = Object.keys(tripIntervalRanges);
-
-	keys.forEach(function(id){
-		if(parseTime(tripIntervalRanges[id].begin) <= value && value <= parseTime(tripIntervalRanges[id].end)){
-			var r_id = "route_" + id.substring(id.lastIndexOf('_')+1,id.indexOf('.'));
-			currentTrips[r_id] = currentTrips[r_id] || []
-			currentTrips[r_id].push(id);
-		}
-	})
-
-	var currentKeys = Object.keys(currentTrips);
-
-	currentKeys.forEach(function(route){
-		currentTrips[route].forEach(function(trip){
-			for(var i =0; i< intervals[route][trip].length; i++){
-				if(parseTime(intervals[route][trip][i].start) <= value && value <= parseTime(intervals[route][trip][i].stop) )
-					intervalList[trip] = intervals[route][trip][i];
-			}	
+	var v = timeToInt(d3.time.format('%X')(value));
+	segTree.queryPoint(v,function(results){
+		results.forEach(function(result){
+			var id = result.inter.name;
+			intervalList[id] = result.inter.interval;
 		})
-		
-	 })
+	})
 	if(intervalList){
 		var activeTrips = Object.keys(intervalList);
 		var trips = d3.select("#plot").selectAll(".trip").data(activeTrips);
@@ -94,29 +81,52 @@ function moveTrip(value,map,intervals){
 function getInitialTrips(Intervals){
 	var tripArray; 
 }
-
+var segTree = segmentTree();
+function timeToInt(time){
+	var place = 1;
+	var val = 0;
+	for(var i = time.length-1; i>=0; i--){
+		var d = parseInt(time[i]);
+		if(!isNaN(d)){
+			val += d*place;
+			place = place * 10;
+		}
+	}
+	return val;
+}
 var tripSetter = {
 	required:0,
 	count:0,
 	setRequired:function(numRequired){
 		this.required = numRequired;
 	},
-	setTrip:function(route_id,tripData,Element,froute,trip_id,trip_id2){
-		// console.log(tripData);
+	setTrip:function(route_id,tripData,Element,froute,builtIntervals){
 		var TheRoute = froute;
-		var TestTrip = tripData[trip_id]
-		var TestTrip2= tripData[trip_id2];
-		
-		
-		start = TestTrip[0].arrival_time;
-		end = TestTrip2[TestTrip2.length-1].arrival_time;
 		//var intervals = getAllRouteIntervals(tripData,TheRoute,"route_" + route_id);
-		intervalStructure.addIntervals(tripData,TheRoute,"route_" + route_id);
-		tripRanges.addRanges(getTripRanges(tripData));
-		console.log(tripRanges);
-		this.incCount();
-		if(this.canBuild())
-			buildSlider(Element,/*start*/"06:20:00","07:00:00"/*end*//*,intervals()*/);
+		//intervalStructure.addIntervals(tripData,TheRoute,"route_" + route_id,Stops,graph);
+		intervalStructure.intervalObj = builtIntervals.intervalObj;
+		var allintervals = intervalStructure.getIntervals();
+		var routes = Object.keys(allintervals);
+		routes.forEach(function(route){
+			var trips = Object.keys(allintervals[route]);
+			trips.forEach(function(trip){
+				allintervals[route][trip].intervals.forEach(function(interval){
+					var start = timeToInt(interval.start);
+					var end = timeToInt(interval.stop);
+					if(start<end){
+						intervalObj = {name:trip,interval:interval};
+						segTree.pushInterval(start,end,intervalObj);
+					}
+				})
+
+			})
+		})
+		segTree.buildTree();
+		//tripRanges.addRanges(getTripRanges(intervalStructure.getIntervals()));
+		//console.log(intervalStructure);
+		
+		
+		buildSlider(Element,/*start*/"06:20:00","06:30:00"/*end*//*,intervals()*/);
 	},
 	incCount:function(){
 		this.count++;
@@ -124,39 +134,41 @@ var tripSetter = {
 	canBuild:function(){
 		return this.count == this.required;
 	}
-
-
 }
 
 
-function getTripRanges(tripData){
-	var keys = Object.keys(tripData);
+function getTripRanges(routeIntervals){
+	var keys = Object.keys(routeIntervals);
 	var ranges = {}
 	keys.forEach(function(id){
-		var current = tripData[id];
-		ranges[id] = {begin:current[0].departure_time,end:current[current.length-1].arrival_time}
+		var currentRoute = routeIntervals[id];
+		tripKeys = Object.keys(currentRoute);
+		tripKeys.forEach(function(k) {
+			ranges[k] = currentRoute[k].range;	
+		})
+		 
 	})
 	return ranges;
 }
 
-function findStop(stopPrefix){
-	for(var i =0; i< Stops.length; i++){
-		if(Stops[i].properties.stop_id.substring(0,3) === stopPrefix)
-			return i;
-	}
-	return -1;
-}
+// function findStop(stopPrefix){
+// 	for(var i =0; i< Stops.length; i++){
+// 		if(Stops[i].properties.stop_id.substring(0,3) === stopPrefix)
+// 			return i;
+// 	}
+// 	return -1;
+// }
 
 
-function getAllRouteIntervals(tripData,RouteData,route_id){
-	var keys = Object.keys(tripData);
-	var tripIntervals = {};
-	keys.forEach(function(id){
-		tripIntervals[id] = getIntervals(tripData[id],RouteData,route_id)();
-	})
-	return function(){return tripIntervals};
+// function getAllRouteIntervals(tripData,RouteData,route_id){
+// 	var keys = Object.keys(tripData);
+// 	var tripIntervals = {};
+// 	keys.forEach(function(id){
+// 		tripIntervals[id] = getIntervals(tripData[id],RouteData,route_id)();
+// 	})
+// 	return function(){return tripIntervals};
 
-}
+// }
 
 var TimeObj = function(){
 		this.start_id='';
@@ -169,15 +181,15 @@ var TimeObj = function(){
 
 var intervalStructure = {
 	intervalObj:{},
-	addIntervals:function (tripData,RouteData,route_id){
-		this.intervalObj[route_id] = getAllRouteIntervals(tripData,RouteData,route_id)();
-	},
+// 	addIntervals:function (tripData,RouteData,route_id){
+// 		this.intervalObj[route_id] = getAllRouteIntervals(tripData,RouteData,route_id)();
+// 	},
 
 	getIntervals:function(){
 		return this.intervalObj;
 	}
 }
-
+/*
 function getIntervals(oneTripsData,RouteData,route_id){
 	
 	var intervals = [];
@@ -200,6 +212,7 @@ function getIntervals(oneTripsData,RouteData,route_id){
 			var timeArr = []; //prepare an array of time objects;
 			var realRoute = graph.getShortestPath(route_id.substring(route_id.indexOf('_')+1,route_id.length),
 																	 timeObj.start_id,timeObj.stop_id);
+			
 			
 			for(var j =0; j< realRoute.length-1; j++){
 				var timeObja = new TimeObj();
@@ -238,7 +251,7 @@ function play(intervals){
 	    	currTime.setSeconds(currTime.getSeconds() + 30);
 	    	time = tmap(currTime);
 		}
-	}
+	}*/
 
 //Best option might be to have a graph datastructure and then a method that 
 //will convert the datastructure to a FeatureColllection after initial processing.

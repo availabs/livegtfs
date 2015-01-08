@@ -7,36 +7,31 @@ var currentAgency;
 var projection, path,
 geoJson, GeoData,Stops=[],Routes,pathcoll;
 
-var Day = "TUESDAY";
+var Day = "MONDAY";
 
 function getGraphData(Element,AgencyID){
 	//We use the availabs api to retrieve route data of specified id
-	var routeUrl = 'sampleRoutes.json';//HOST+"/agency/"+AgencyID+"/routes";
+	var routeUrl = /*'sampleRoutes.json';//*/HOST+"/agency/"+AgencyID+"/routes";
 	
 	currentAgency = AgencyID;
 	d3.json(routeUrl,function(err,data){
 		if(err) console.log(err);
 		routeGeo = data;
-		Routes = plotGraph(Element,routeGeo);
+		Routes = setup(Element,routeGeo);
 		getStopData(Element,AgencyID);
 	});
 }
 
 function getStopData(Element,AgencyID){
-	var stopUrl = 'sampleStops.json';//HOST+"/agency/"+AgencyID+"/stops";
+	var stopUrl = /*'sampleStops.json';//*/HOST+"/agency/"+AgencyID+"/stops";
 	var stops;
 	d3.json(stopUrl,function(err,data){
 		if(err) console.log(err);
 		stopGeo = data;
 		Stops = plotStops(stopGeo);
 		pathcoll = getPathCollection(Routes,Stops);
-		Routes.forEach(function(route){
-			if(route.geometry.coordinates.length > 0 && (/*route.properties.route_id==="F" ||*/ route.properties.route_id!=="5")){
-				tripSetter.setRequired(1);
-				getTripData(route.properties.route_id,Day,AgencyID,Element);	
-			}
-		 	
-		})
+		getTripData('route_id',Day,AgencyID,Element);
+		plotAllRoutes(Routes);
 		
 	});	
 }
@@ -65,7 +60,7 @@ function plotStops(StopData){
 				})
 
 	group.selectAll(".stationLabel")
-					.data(stops.features).enter().append("circle").filter(function(d){return d.properties.stop_id.indexOf("5") ===0})
+					.data(stops.features).enter().append("circle")//.filter(function(d){return d.properties.stop_id.indexOf("sdf")===0})
 					.attr("class",function(d){
 						var everyStation = " stationLabel";
 						var classes ="";
@@ -97,14 +92,14 @@ function plotStops(StopData){
 }
 
 /*{type:'Feature',properties:{}, geometry:test}*/
-function plotGraph(Element,GeoData){
+function setup(Element,GeoData){
 	var bbox = GeoData.bbox;
 	var scale = .95/ Math.max( (bbox[3] - bbox[1])/W_width, (bbox[2] - bbox[0])/W_height  );
 	
 	geoJson = GeoData;
 	projection = d3.geo.mercator()
             .center(GeoData.transform.translate)
-            .scale(50*scale)
+            .scale(25*scale)
             
     path = d3.geo.path().projection(projection);
     var x1,x2,y1,y2,bounds;
@@ -124,14 +119,14 @@ function plotGraph(Element,GeoData){
 				group.attr("transform",function(){return "translate("+(0-x1+0.05*width)+","+(0-y1+0.05*height)+")";  });
 
 	var eqpts = findJunctions(geoJson);
-	console.log(eqpts);
-	var circs ={type:'FeatureCollection',features:[]}
-
 	eqpts.forEach(function(d){
 		Stops.push(d);
-		circs.features.push(d);
 	});
-	console.log(Stops);
+	// var paths = group.selectAll("path").data(geoJson.features)
+	// 				.enter().append("path")//.filter(function(d){return d.properties.route_id === "F"})
+	// 				.attr("id",function(d){return "route_"+d.properties.route_id;})
+	// 				.style("stroke",function(d){return "#"+d.properties.route_color;})
+	// 				paths.attr("d",path); 
 	
 	return geoJson.features;
 }
@@ -140,23 +135,11 @@ function plotGraph(Element,GeoData){
 
 
 function getTripData(Route_ID,Day,AgencyID,Element){
-	var tripURL = HOST+"/agency/routeSchedule?id="+AgencyID+"&day="+Day+"&route_id="+Route_ID;
+	var tripURL = /*'temp.json'//*/HOST+"/agency/routeData?id="+AgencyID+"&day="+Day;
 	d3.json(tripURL,function(err,data){
 		if(err) console.log(err);
-		var tripData = {};
-		var route_id = Route_ID;
-		var beenPlotted = false;
-			data.forEach(function(d){
-				var trip_id = d.trip_id.replace(d.trip_id.substring(d.trip_id.lastIndexOf('_'),d.trip_id.indexOf('.')+1),'_'+Route_ID+'.');
-				if(!tripData[trip_id])
-					tripData[trip_id] = []
-				tripData[trip_id].push(d);				
-			})
-		var ids = Object.keys(tripData);
-		var trip_id = ids[0];
-		var trip_id2 = ids[1];
-		var froute = plotter(route_id);
-		tripSetter.setTrip(route_id,tripData,Element,froute,trip_id,trip_id2);
+		var intervalStructure = data;
+		tripSetter.setTrip(Route_ID,'tripData',Element,'froute',intervalStructure);
 	})
 }
 
@@ -200,10 +183,14 @@ function distance(a,b){
 	return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );
 }
 
-function plotter(id){
-	var newRoutes = [];
-	//console.log(Routes);
+function plotAllRoutes(routes){
+	routes.forEach(function(route){
+		if(route.geometry.coordinates.length > 0)
+			plotter(route.properties.route_id);
+	})
+}
 
+function plotter(id){
 	var	newroute = getStops(id, Routes, pathcoll);
 	var finalRoute = setShapes(newroute);
 	return finalRoute;
