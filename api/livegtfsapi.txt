@@ -27,7 +27,7 @@ gtfsData.getTrips(AgencyId,Day,Route_ID,cb) -- retrieve raw data for a particula
 Moving Api
 
 mover.tripSetter.setTrip(Element,data,times) -- using precomputed data from getRouteTrips 
-												build a slider that will construct and move trip objects
+						build a slider that will construct and move trip objects
 
 	Element -- the html div where the slider will be built
 	data    -- the precomputed data for that days schedule structure
@@ -35,11 +35,12 @@ mover.tripSetter.setTrip(Element,data,times) -- using precomputed data from getR
 				Defaults to 9:00 - 17:30
 Segmenting API
 
-pather.plotPaths(routes,stops,settings)  -- this will try to plot the original route data 												combined with stop data to form and approximate 											segmentation of the original routes
+pather.plotPaths(routes,stops,settings,route_id)  -- this will try to plot the original route data 												combined with stop data to form and approximate 											segmentation of the original routes
 		routes 		-- an array of route objects.
 		stops  		-- an array of stop objects.
 		settings	-- Object that requires and existing plot object with calculated dimensions
 						or data,plotId, and scale factory by which to build a new plot
+		route_id  	-- OPTIONAL limit the plotted segments to a single route of the given route data
 
 Plotting Api
 
