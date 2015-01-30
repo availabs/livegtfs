@@ -10,7 +10,7 @@ var Day = "MONDAY";
 
 function getGraphData(Element,AgencyID){
 	//We use the availabs api to retrieve route data of specified id
-	var routeUrl = /*'sampleRoutes.json';//*/HOST+"/agency/"+AgencyID+"/routes";
+	var routeUrl = 'sampleRoutes.json';//HOST+"/agency/"+AgencyID+"/routes";
 	
 	currentAgency = AgencyID;
 	d3.json(routeUrl,function(err,data){
@@ -22,7 +22,7 @@ function getGraphData(Element,AgencyID){
 }
 
 function getStopData(Element,AgencyID){
-	var stopUrl = /*'sampleStops.json';//*/HOST+"/agency/"+AgencyID+"/stops";
+	var stopUrl = 'sampleStops.json';//HOST+"/agency/"+AgencyID+"/stops";
 	var stops;
 	d3.json(stopUrl,function(err,data){
 		if(err) console.log(err);

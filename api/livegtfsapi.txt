@@ -1,0 +1,73 @@
+
+Data Fetching Api
+
+gtfsData.getRouteTrips(AgencyID, Day, cb) -- retrieve precomputed schedule structure of an 													agencies trip information for a particular day.
+
+	AgencyID -- the id of the particular agency (ex. NYCMTA is 109)
+	Day -- "MONDAY","TUESDAY" ...
+	cb  -- function to execute when data is returned, should accept one parameter for the data
+
+gtfsData.getRoutes(AgencyID, cb) -- retrieve raw route gtfs data 
+	AgencyID -- the id of the particular agency (ex. NYCMTA is 109)
+	cb  -- function to execute when data is returned, should accept one parameter for the data
+
+gtfsData.getStops(AgencyID,opts,cb) -- retrieve raw data involiving the locations of stops for 											a particular agency
+	AgencyID -- the id of the particular agency (ex. NYCMTA is 109)
+	opts --
+			Type -- specify whether or not the data format should be a Feature Collection.
+			(ex opts = {Type:'FeatureCollection'})
+	cb  -- function to execute when data is returned, should accept one parameter for the data
+
+gtfsData.getTrips(AgencyId,Day,Route_ID,cb) -- retrieve raw data for a particular agency on 												the specified day involving trip schedules for 												   that day
+	AgencyID -- the id of the particular agency (ex. NYCMTA is 109)
+	Day -- "MONDAY","TUESDAY" ...
+	Route_ID -- OPTIONAL, specify a particular route id
+	cb  -- function to execute when data is returned, should accept one parameter for the data
+
+Moving Api
+
+mover.tripSetter.setTrip(Element,data,times) -- using precomputed data from getRouteTrips 
+												build a slider that will construct and move trip objects
+
+	Element -- the html div where the slider will be built
+	data    -- the precomputed data for that days schedule structure
+	times   -- OPTIONAL, sets the starting and ending times to be visualized
+				Defaults to 9:00 - 17:30
+Segmenting API
+
+pather.plotPaths(routes,stops,settings)  -- this will try to plot the original route data 												combined with stop data to form and approximate 											segmentation of the original routes
+		routes 		-- an array of route objects.
+		stops  		-- an array of stop objects.
+		settings	-- Object that requires and existing plot object with calculated dimensions
+						or data,plotId, and scale factory by which to build a new plot
+
+Plotting Api
+
+plotter(Element)  -- function requires a html element in which to build its svg object
+					 returns a object with three methods
+
+plotter.plotRoutes(RouteData,plotId,scaleFactor,RouteId) -- plots the given route data using d3
+	RouteData -- A featureCollection  returned from the getRoutes call in the data section
+	plotId    -- the id that will be given to the svg element
+	scaleFactor -- the scale of the figure to plot
+	RouteId  	-- OPTIONAL, the name of the single route to be plotted instead of the entire 					collection
+
+plotter.plotStops(StopData,plotId,scaleFactor,junctions,RouteID) -- plot the stops in the 
+																	stopdata
+
+		StopData -- the 'FeatureCollection' format of the stop data
+		plotId   -- the id to be given to the svg element, plots it on existing
+					element if that id already exists
+
+		scaleFactor -- the scale of the group of points to plot
+		junctions   -- OPTIONAL param if used with route data
+		RouteID     -- OPTIONAL param used to plot stops associated with only one route or area
+
+plotter.junctionUtil.getJuncs(RouteData) -- function that locates all points at which two 
+											linestrings of a greater multiline strings meet 
+	RouteData -- A FeatureCollection of routes 
+
+plotter.junctionUtil.mergeJuncs(stops,junctions) -- changes stops to the union of stops and 
+													junctions based on location.
+		stops -- featureCollection of stops 
+		junctions -- collections of junction points returned by getJuncs()
