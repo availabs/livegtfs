@@ -1,0 +1,8 @@
+old
+*.json
+broke
+working
+*~
+*#*
+bower_components
+*interval-query
