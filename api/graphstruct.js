@@ -278,6 +278,13 @@ var newRGraph = (function(){
 							else
 								console.log("Graph does not exist");
 						},
+						getRouteNodes:function(route_id){ // useful for debugging
+							if(this.Routes[route_id])
+								return this.Routes[route_id].getVerticies();
+							else
+								console.log("Graph does not exist");
+
+						},
 						addEdgeToRoute:function(route_id,v1,v2){
 							this.addRoute(route_id);
 							this.Routes[route_id].addEdge(v1,v2);

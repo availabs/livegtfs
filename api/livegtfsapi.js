@@ -308,7 +308,7 @@ var livegtfs = (function(){
 	var segmentTree = function() {
 		/*
 		   * interval-query
-		   * Copyright Ã‚Â© 2012, Thomas OberndÃƒÂ¶rfer <toberndo@yarkon.de>
+		   * Copyright Ãƒâ€šÃ‚Â© 2012, Thomas OberndÃƒÆ’Ã‚Â¶rfer <toberndo@yarkon.de>
 		   * MIT Licensed
 		*/
 		"use strict";  
@@ -971,7 +971,8 @@ var livegtfs = (function(){
 										}
 									})
 									if(index >= 0){
-										eqpts[index].properties.routes.push(d.properties.route_id); 
+										if(eqpts[index].properties.routes.indexOf(d.properties.route_id)<0)
+											eqpts[index].properties.routes.push(d.properties.route_id); 
 									}else{
 										var k =eqpts.length;
 										var f = {type:"Feature",geometry:{type:'Point',coordinates:a},properties:{station_name:'j'+k,stop_id:'j'+k,stop_name:'junction'+k,routes:[d.properties.route_id]}};
@@ -989,39 +990,12 @@ var livegtfs = (function(){
 
 		function distance(a,b){
 			return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );
-		}
+		}	
 	};
 	///////////////////////////////////EndPlotMod/////////////////////////////////////////
 
 	///////////////////////////////////Pather/////////////////////////////////////////////
 	var pather = (function(){
-		var nparse = function(string){
-			var q = string[string.length-1];
-			var regex = /[^0-9]/g;
-			if(q.match(regex)){
-				return string.slice(0,string.length-1);
-			}
-			else{
-				return string;
-			}
-		};
-		var builder = function(newRoute,range,start,end,graph){
-			var obj = {
-						'type':'Feature',
-						'properties':newRoute.properties,
-						'geometry':{
-							'type':'LineString',
-							'coordinates':range
-						},
-						'start':start,
-						'end':end
-					};
-					graph.addEdgeToRoute(newRoute.properties.route_id,
-										nparse(obj.start.properties.stop_ids[0]),
-										nparse(obj.end.properties.stop_ids[0])
-										);
-					return obj;
-		}
 		var getPathCollection = function getPathCollection(routes,stations){
 			var pathCollection = []
 
@@ -1056,18 +1030,8 @@ var livegtfs = (function(){
 			return curRoute;
 		}
 
-		// function reverseSegments(Segments){
-		// 	var revsegs = JSON.parse(JSON.stringify(Segments));// make deep copy of segments
-		// 	revsegs.features.forEach(function(feature){
-		// 		feature.geometry.coordinates.reverse(); //reverse the ordering of the points
-		// 		var temp = feature.end;
-		// 		feature.end = feature.start;
-		// 		feature.start = temp;
-		// 	})
-		// 	return revsegs;
-
-		// }
-		var plotRouteSegs = function setShapes(newRoute,plotSettings){
+		
+		var getRouteSegs = function setShapes(newRoute){
 			var currentBin,index;
 			var routeSegments = {
 				type:'FeatureCollection',
@@ -1082,15 +1046,7 @@ var livegtfs = (function(){
 			var graph = ret.graph;
 			var plotObj;
 			routeSegments = mergeSegments(segmentsArr);
-			if(routeSegments.features.length >0){
-				if(typeof plotSettings.path !== 'undefined'){
-					plotNewRoute(routeSegments,plotSettings.path);
-				}else{
-					plotObj = plotCalcs(plotSettings.data,plotSettings.plotId,plotSettings.scaleFactor);
-					plotNewRoute(routeSegments,plotObj.path);
-
-				}
-			}
+			
 
 			return {routeSegments:routeSegments,'graph':graph};
 
@@ -1129,30 +1085,6 @@ var livegtfs = (function(){
 						//var collection = mergeSegments(LIST);
 						return {list:LIST,graph:ret.graph};
 					}
-					function plotNewRoute(featureCollection,path){
-						var plot = d3.select("#plot");
-						var  route = featureCollection.features[0].properties.route_id;
-						var paths = plot.selectAll("#plot path#route_"+route);
-						paths.data(featureCollection.features)
-								.enter().append("path")
-								.attr("class",function(d){return "route_"+d.properties.route_id;})
-								.attr("id",function(d,i){ 
-								
-									str = "_s_"
-									+nparse(d.start.properties.stop_ids[0])+"_e_"+nparse(d.end.properties.stop_ids[0]);
-								return str;
-								
-								})
-
-
-								.style("stroke",function(d){var color = d.properties.route_color; if(color){return '#'+color;} return '#000' })
-								.style('fill','none')
-								.style('stroke-width','1pt')
-								.attr("d",path); 			
-					}
-
-					   
-
 						
 					function getStations(stops){
 						var uniqueStations = [];
@@ -1224,6 +1156,23 @@ var livegtfs = (function(){
 					   	}
 
 					function getLines(lineString, realStops,graph){
+						var builder = function(newRoute,range,start,end,graph){
+							var obj = {
+										'type':'Feature',
+										'properties':newRoute.properties,
+										'geometry':{
+											'type':'LineString',
+											'coordinates':range
+										},
+										'start':start,
+										'end':end
+									};
+									graph.addEdgeToRoute(newRoute.properties.route_id,
+														nparse(obj.start.properties.stop_ids[0]),
+														nparse(obj.end.properties.stop_ids[0])
+														);
+									return obj;
+						}
 				 		var trueStops = getSet(lineString,realStops);  ///get all stops that lie and the current lineString
 						var startIndexes = findStopsAtPoint(lineString[0],trueStops); //find all stops that lie and the initial point
 						var starts = [];
@@ -1308,7 +1257,7 @@ var livegtfs = (function(){
 							}	
 							return {'lines':routeSegments,'graph':graph};	
 						}
-
+			
 		}
 
 		function distance(a,b){
@@ -1321,14 +1270,52 @@ var livegtfs = (function(){
 			// }
 			return d;
 		}
+		return {getPathCollection:getPathCollection,getStops:getStops,getRouteSegs:getRouteSegs}
+	})();
+	//////////////////////////////////EndPather//////////////////////////////////////////
+
+	//////////////////////////////////pathPlotter////////////////////////////////////////
+	var pathPlotter = (function(){
+
+		var plotNewRoute = function plotNewRoute(featureCollection,path){
+			var plot = d3.select("#plot");
+			var  route = featureCollection.features[0].properties.route_id;
+			var paths = plot.selectAll("#plot path#route_"+route);
+			paths.data(featureCollection.features)
+					.enter().append("path")
+					.attr("class",function(d){return "route_"+d.properties.route_id;})
+					.attr("id",function(d,i){ 
+					
+						str = "_s_"
+						+nparse(d.start.properties.stop_ids[0])+"_e_"+nparse(d.end.properties.stop_ids[0]);
+					return str;
+					
+					})
+
+
+					.style("stroke",function(d){var color = d.properties.route_color; if(color){return '#'+color;} return '#000' })
+					.style('fill','none')
+					.style('stroke-width','1pt')
+					.attr("d",path); 			
+		}
+
 		var plotter = function plotter(routes,id,pathcoll,settings){
-			var	newroute = getStops(id, routes, pathcoll);
-			var finalRoute = plotRouteSegs(newroute,settings).routeSegments;
-			return finalRoute;
+			var	newroute = pather.getStops(id, routes, pathcoll);
+			var routeSegments = pather.getRouteSegs(newroute).routeSegments;
+			if(routeSegments.features.length >0){
+				if(typeof settings.path !== 'undefined'){
+					plotNewRoute(routeSegments,settings.path);
+				}else{
+					plotObj = plotCalcs(settings.data,settings.plotId,settings.scaleFactor);
+					plotNewRoute(routeSegments,plotObj.path);
+
+				}
+			}
+			return routeSegments;
 		}
 
 		var plotPathedRoutes = function plotPathedRoutes(routes,stops,settings,routeId){
-			var pathcoll = getPathCollection(routes,stops);
+			var pathcoll = pather.getPathCollection(routes,stops);
 			if(typeof settings === 'undefined' ||  (typeof settings.path === 'undefined' && typeof settings.data.transform === 'undefined') ){
 				throw {
 						name:'UsageError',
@@ -1386,8 +1373,9 @@ var livegtfs = (function(){
 
 		
 		return {plotPaths:plotPathedRoutes};
-	})();
-	///////////////////////////////////EndPather//////////////////////////////////////////
+
+	})()
+	///////////////////////////////////EndpathPlotter//////////////////////////////////////////
 
 	///////////////////////////////////Mover//////////////////////////////////////////////
 	var mover = (function(){
@@ -1698,6 +1686,6 @@ var livegtfs = (function(){
 
 
 
-	return {'gtfsData':gtfsDataMod, 'plotter':plotMod, 'pather':pather, 'mover':mover};
+	return {'gtfsData':gtfsDataMod, 'plotter':plotMod, 'pather':pathPlotter, 'mover':mover};
 
 })();

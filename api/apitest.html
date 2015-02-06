@@ -23,49 +23,18 @@ path:hover{
 	<script src='pather.js'></script>
 	<script src='mover.js'></script>
 	-->
+	<script src='fuzzyfixer.js'></script>
+	<script src='nparse.js'></script>
 	<script src='livegtfsapi.js'></script>
 	<script>
 
-			var distance = function(a,b){
-				return Math.sqrt((a[0] - b[0])*(a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]) )
-			};
-			var fuzzyfixer = function(rdata,sdata){
-				sdata.features.forEach(function(stopobj){
-
-							stopobj.properties.routes.forEach(function(routeid){
-								var routeList = [];
-								var stopcoor = stopobj.geometry.coordinates;
-								var mindist = Infinity; 
-								var minpoint = [0,0,0];
-								rdata.features.forEach(function(route){
-									if(route.properties.route_id === routeid)
-										routeList.push(route);
-								});
-								var transfer = 0;
-								routeList.forEach(function(route,i){
-									transfer = transfer || route.geometry.coordinates.length
-									route.geometry.coordinates.forEach(function(line,j){
-										line.forEach(function(point,k){
-											var dist = distance(stopcoor,point);
-											if(dist < mindist){
-												minpoint = [i,j,k];
-												mindist = dist;
-											} 
-										})
-									})
-								})
-								if(transfer)
-									stopobj.geometry.coordinates = routeList[minpoint[0]].geometry.coordinates[minpoint[1]][minpoint[2]];
-
-							})
-						})
-			}
+			
 
 			var fetcher = livegtfs.gtfsData;
 			var el = d3.select('body').append('div');
 			var plotter = livegtfs.plotter(el);
 			var plotObj={};
-				fetcher.getRouteTrips(12,'MONDAY',function(data){
+				fetcher.getRouteTrips(109,'MONDAY',function(data){
 						// var trips = data.trips;
 						// var keys = Object.keys(trips);
 						// keys.forEach(function(trip){
@@ -74,19 +43,18 @@ path:hover{
 						// })
 						livegtfs.mover.tripSetter.setTrip(el,data,{start:'05:24:00',end:'06:49:00'});
 				 })
-				fetcher.getRoutes(12,function(rdata){
+				fetcher.getRoutes(109,function(rdata){
 					console.log('routes',rdata);
 					var junctions = plotter.junctionUtil.getJuncs(rdata);
 					//plotter.plotRoutes(rdata,'plot',40)
-					fetcher.getStops(12,{Type:'FeatureCollection'},function(sdata){
+					fetcher.getStops(109,{Type:'FeatureCollection'},function(sdata){
 						console.log('stops',sdata);
-						fuzzyfixer(rdata,sdata)
+						sdata = fuzzyfixer(rdata,sdata)
 						plotter.junctionUtil.mergeJuncs(sdata,junctions);
-						plotObj = {data:sdata,plotId:'plot',scaleFactor:40}
-						
-						
-						plotter.plotStops(sdata,'plot',40,junctions,'540-142');
-						livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj,'540-142');
+						plotObj = {data:sdata,plotId:'plot',scaleFactor:40}			
+						console.log(sdata);
+						plotter.plotStops(sdata,'plot',40,junctions);
+						livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj);
 
 					});
 				});

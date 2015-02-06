@@ -198,7 +198,8 @@ var plotMod = function(Element){
 									}
 								})
 								if(index >= 0){
-									eqpts[index].properties.routes.push(d.properties.route_id); 
+									if(eqpts[index].properties.routes.indexOf(d.properties.route_id)<0)
+										eqpts[index].properties.routes.push(d.properties.route_id); 
 								}else{
 									var k =eqpts.length;
 									var f = {type:"Feature",geometry:{type:'Point',coordinates:a},properties:{station_name:'j'+k,stop_id:'j'+k,stop_name:'junction'+k,routes:[d.properties.route_id]}};
