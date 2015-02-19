@@ -10,7 +10,7 @@ var pathPlotter = (function(){
 				.attr("id",function(d,i){ 
 				
 					str = "_s_"
-					+nparse(d.start.properties.stop_ids[0])+"_e_"+nparse(d.end.properties.stop_ids[0]);
+					+nparse(d.properties.start.properties.stop_ids[0])+"_e_"+nparse(d.properties.end.properties.stop_ids[0]);
 				return str;
 				
 				})
@@ -19,6 +19,12 @@ var pathPlotter = (function(){
 				.style("stroke",function(d){var color = d.properties.route_color; if(color){return '#'+color;} return '#000' })
 				.style('fill','none')
 				.style('stroke-width','1pt')
+				.on('mouseover',function(d){
+					d3.select(this).style({'stroke-width':'16pt',opacity:'0.6'})
+				})
+				.on('mouseout',function(d){
+					d3.select(this).style({'stroke-width':'1pt',opacity:'0.6'})
+				})
 				.attr("d",path); 			
 	}
 

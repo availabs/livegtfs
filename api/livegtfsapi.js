@@ -7,300 +7,307 @@ var livegtfs = (function(){
 	}
 	/////////////////////////////////////GraphModule//////////////////////////////////////
 	var newRGraph = (function(){
-			var Graph = function(){
-					this.numEdges  = 0;   //private variable for the number of edges
-					this.adjacencyLists = {};
-				};
-		
-				var AdjacencyList = function(){
-					this.list = new LinkedList();
-				};
-		
-				AdjacencyList.prototype.add = function(obj){
-					if(!this.list.exists(obj))
-						this.list.add(obj);
-				}
-				AdjacencyList.prototype.remove = function(obj){
-					this.list.remove(obj);
-				}
-				AdjacencyList.prototype.print = function(){
-					this.list.print();
-				}
-		
-				var Vertex = function(val){
-					this.vertex = val; 		
-				}
-		
-				Graph.prototype.addEdge = function(vertex1,vertex2){  //This function will add an edge to the graph given its endpoints
-					if(vertex1 !== vertex2){
-						this.adjacencyLists[vertex1] = this.adjacencyLists[vertex1] || new AdjacencyList();
-						this.adjacencyLists[vertex2] = this.adjacencyLists[vertex2] || new AdjacencyList();
-		
-						this.adjacencyLists[vertex1].add(vertex2);
-						this.adjacencyLists[vertex2].add(vertex1);
-						this.numEdges += 1;
+				var Graph = function(){
+						this.numEdges  = 0;   //private variable for the number of edges
+						this.adjacencyLists = {};
+					};
+			
+					var AdjacencyList = function(){
+						this.list = new LinkedList();
+					};
+			
+					AdjacencyList.prototype.add = function(obj){
+						if(!this.list.exists(obj))
+							this.list.add(obj);
 					}
-					return this;
-				}
-		
-				Graph.prototype.getVerticies = function(){
-					return Object.keys(this.adjacencyLists);
-				};
-		
-				Graph.prototype.toString = function(){
-					var adjString = '';
-					var current = null;
-					var verticies = this.getVerticies();
-					console.log(verticies.length + " verticies, " + this.numEdges + " edges");
-					for(var i =0; i< verticies.length; i++){
-						adjString = verticies[i] + ":";
-						current = this.adjacencyLists[verticies[i]].list.listHead;
-						while(current){
-							adjString += " " + current.data;
-							current = current.next;
+					AdjacencyList.prototype.remove = function(obj){
+						this.list.remove(obj);
+					}
+					AdjacencyList.prototype.print = function(){
+						this.list.print();
+					}
+			
+					var Vertex = function(val){
+						this.vertex = val; 		
+					}
+			
+					Graph.prototype.addEdge = function(vertex1,vertex2){  //This function will add an edge to the graph given its endpoints
+						if(vertex1 !== vertex2){
+							this.adjacencyLists[vertex1] = this.adjacencyLists[vertex1] || new AdjacencyList();
+							this.adjacencyLists[vertex2] = this.adjacencyLists[vertex2] || new AdjacencyList();
+			
+							this.adjacencyLists[vertex1].add(vertex2);
+							this.adjacencyLists[vertex2].add(vertex1);
+							this.numEdges += 1;
 						}
-						console.log(adjString);
-						adjString = '';
+						return this;
 					}
-					return this;
-				};
-		
-				Graph.prototype.clearAdjacencies = function(vertex){
-					var adjList = this.getAdjacencies[vertex] || null;
-					if(adjList !== null){
-						this.adjacencyLists[vertex] = new LinkedList();
+			
+					Graph.prototype.getVerticies = function(){
+						return Object.keys(this.adjacencyLists);
+					};
+			
+					Graph.prototype.toString = function(){
+						var adjString = '';
+						var current = null;
+						var verticies = this.getVerticies();
+						console.log(verticies.length + " verticies, " + this.numEdges + " edges");
+						for(var i =0; i< verticies.length; i++){
+							adjString = verticies[i] + ":";
+							current = this.adjacencyLists[verticies[i]].list.listHead;
+							while(current){
+								adjString += " " + current.data;
+								current = current.next;
+							}
+							console.log(adjString);
+							adjString = '';
+						}
+						return this;
+					};
+			
+					Graph.prototype.clearAdjacencies = function(vertex){
+						var adjList = this.getAdjacencies[vertex] || null;
+						if(adjList !== null){
+							this.adjacencyLists[vertex] = new LinkedList();
+						}
 					}
-				}
-		
-				Graph.prototype.bridgeVerticies = function(v1,bridge,v2){
-					var v1AdjList = this.adjacencyLists[v1].list || null;
-					var v2AdjList = this.adjacencyLists[v2].list || null;
-					this.adjacencyLists[bridge] = this.adjacencyLists[bridge] || (new LinkedList());
-					var bridgeAdjList = this.adjacencyLists[bridge];
-		
-		
-					if(v1AdjList !== null && v2AdjList !== null){
-						v1AdjList.swap(v2,bridge);
-						v2AdjList.swap(v1,bridge);
-						if(!bridgeAdjList.list.exists(v1))
-							this.adjacencyLists[bridge].list.add(v1);
-						if(!bridgeAdjList.list.exists(v2))
-		
-							this.adjacencyLists[bridge].list.add(v2);
-							
-					}else{
-						console.log("Error, unexpected vertex");
+			
+					Graph.prototype.bridgeVerticies = function(v1,bridge,v2){
+						var v1AdjList = this.adjacencyLists[v1].list || null;
+						var v2AdjList = this.adjacencyLists[v2].list || null;
+						this.adjacencyLists[bridge] = this.adjacencyLists[bridge] || (new LinkedList());
+						var bridgeAdjList = this.adjacencyLists[bridge];
+			
+			
+						if(v1AdjList !== null && v2AdjList !== null){
+							v1AdjList.swap(v2,bridge);
+							v2AdjList.swap(v1,bridge);
+							if(!bridgeAdjList.list.exists(v1))
+								this.adjacencyLists[bridge].list.add(v1);
+							if(!bridgeAdjList.list.exists(v2))
+			
+								this.adjacencyLists[bridge].list.add(v2);
+								
+						}else{
+							console.log("Error, unexpected vertex");
+						}
 					}
-				}
-		
-				Graph.prototype.getAdjacencies = function(vertex){
-		
-					var adjList = this.adjacencyLists[vertex] || (new AdjacencyList());
-					var array = [];
-					var tracer = adjList.list.listHead;
-					while(tracer != null){  //while tracer isn't null
-						array.push(tracer.data);
-						tracer = tracer.next;
+			
+					Graph.prototype.getAdjacencies = function(vertex){
+			
+						var adjList = this.adjacencyLists[vertex] || (new AdjacencyList());
+						var array = [];
+						var tracer = adjList.list.listHead;
+						while(tracer != null){  //while tracer isn't null
+							array.push(tracer.data);
+							tracer = tracer.next;
+						}
+						return array;
 					}
-					return array;
-				}
-		
-		
-				function dfs(Graph,start,end){
-					var stack = new Stack();
-					stack.push(start);
-					var seenList = [];
-					seenList.push(start);
-					var parents = {};
-					if(start === end){
+			
+			
+					function dfs(Graph,start,end){
+						var stack = new Stack();
+						stack.push(start);
+						var seenList = [];
+						seenList.push(start);
+						var parents = {};
+						if(start === end){
+							return [];
+						}
+						while(stack !== []){
+							current = stack.pop();  //get the top of the stack
+							if(current === end){	//if we found our point 
+								var pathStack = [end];
+								var child = end,parent = parents[child];
+								pathStack.unshift(parent);	
+								while(parent !== start){	//recreate path traversed with backwards parent map
+								 	child = parent;
+									parent = parents[child] || null;
+									pathStack.unshift(parent);
+								}
+								return pathStack;		//return the stack
+							}
+							//if not get the adjacencies of current node
+							var adjacencies = Graph.getAdjacencies(current); //get the Adjacencies of the current node
+							seenList.push(current);  //mark it as seen
+							for(var i=0; i< adjacencies.length; i++){  //for every node adjacent push it on the stack if unseen
+								if(seenList.indexOf(adjacencies[i]) < 0){
+									seenList.push(adjacencies[i]);
+									stack.push(adjacencies[i]);
+									parents[adjacencies[i]] = current;
+								}
+							}
+						}
+					}
+			
+					function bfs(Graph,source,target){
+						var queue = [];      //initialize a queue
+						var set = [];   //initialize the list of seen verticies
+						var parents = {}
+						queue.push(source);  // push it on the queue 
+						set.push(source);  //push it on the of verticies that we are aware of
+			
+						while( queue.length != 0 ){  //while the queue is not empty
+							var t = queue.splice(0,1)[0];   //get the first element in the queue
+							if(t === target){				//if the  current vertex is the one we are looking for stop
+								var pathStack = [target];
+								var child = target, parent = parents[child];
+								pathStack.unshift(parent);
+								while(parent !== source){
+									child = parent;
+									parent = parents[child];
+									pathStack.unshift(parent);
+								}
+								return pathStack;
+							}
+							var adjacencies = Graph.getAdjacencies(t);   // if not get the vertexes adjacent to this node
+							adjacencies.forEach(function(vert){          // for each of them
+								if(set.indexOf(vert) < 0){			 	 // if we are aware of them, ignore as they are already set to be evaluated 
+									queue.push(vert);					 // if not, add them to the queue
+									set.push(vert);						 // the set
+									parents[vert] = t;					 // and the mapping of parent nodes for reconstruction
+								}
+							});
+						}
+						console.log("No Match Found");
 						return [];
 					}
-					while(stack !== []){
-						current = stack.pop();  //get the top of the stack
-						if(current === end){	//if we found our point 
-							var pathStack = [end];
-							var child = end,parent = parents[child];
-							pathStack.unshift(parent);	
-							while(parent !== start){	//recreate path traversed with backwards parent map
-							 	child = parent;
-								parent = parents[child] || null;
-								pathStack.unshift(parent);
-							}
-							return pathStack;		//return the stack
-						}
-						//if not get the adjacencies of current node
-						var adjacencies = Graph.getAdjacencies(current); //get the Adjacencies of the current node
-						seenList.push(current);  //mark it as seen
-						for(var i=0; i< adjacencies.length; i++){  //for every node adjacent push it on the stack if unseen
-							if(seenList.indexOf(adjacencies[i]) < 0){
-								seenList.push(adjacencies[i]);
-								stack.push(adjacencies[i]);
-								parents[adjacencies[i]] = current;
-							}
-						}
-					}
+			
+				var Stack = function(){
+					this.stack = [];
 				}
-		
-				function bfs(Graph,source,target){
-					var queue = [];      //initialize a queue
-					var set = [];   //initialize the list of seen verticies
-					var parents = {}
-					queue.push(source);  // push it on the queue 
-					set.push(source);  //push it on the of verticies that we are aware of
-		
-					while( queue.length != 0 ){  //while the queue is not empty
-						var t = queue.splice(0,1)[0];   //get the first element in the queue
-						if(t === target){				//if the  current vertex is the one we are looking for stop
-							var pathStack = [target];
-							var child = target, parent = parents[child];
-							pathStack.unshift(parent);
-							while(parent !== source){
-								child = parent;
-								parent = parents[child];
-								pathStack.unshift(parent);
-							}
-							return pathStack;
-						}
-						var adjacencies = Graph.getAdjacencies(t);   // if not get the vertexes adjacent to this node
-						adjacencies.forEach(function(vert){          // for each of them
-							if(set.indexOf(vert) < 0){			 	 // if we are aware of them, ignore as they are already set to be evaluated 
-								queue.push(vert);					 // if not, add them to the queue
-								set.push(vert);						 // the set
-								parents[vert] = t;					 // and the mapping of parent nodes for reconstruction
-							}
-						});
-					}
-					console.log("No Match Found");
-					return [];
+				Stack.prototype={
+					length:function(){return this.stack.length;},
+					push:  function(obj){this.stack.push(obj);},
+					pop:   function(){
+								var ret = this.stack[this.length()-1];
+								this.stack = this.stack.slice(0,this.length()-1);
+					 			return ret;
+					 			},
+					toList: 	function(){ return this.stack;}
 				}
-		
-			var Stack = function(){
-				this.stack = [];
-			}
-			Stack.prototype={
-				length:function(){return this.stack.length;},
-				push:  function(obj){this.stack.push(obj);},
-				pop:   function(){
-							var ret = this.stack[this.length()-1];
-							this.stack = this.stack.slice(0,this.length()-1);
-				 			return ret;
-				 			},
-				toList: 	function(){ return this.stack;}
-			}
-		
-		
-		
-			var LinkedList = function(){
-				this.length =0;
-				this.listHead = null;
-			};
-		
-			LinkedList.prototype.add = function(obj){
-		
-				var node = {
-					data:obj,
-					next:null
+			
+			
+			
+				var LinkedList = function(){
+					this.length =0;
+					this.listHead = null;
 				};
-				var current = this.listHead;
-				if(this.listHead === null)
-					this.listHead = node;
-				else{
-					while(current.next != null){ //loop till next node is empty
-						current = current.next;
-					}
-					//once it is empty set that link to the node;
-					current.next = node;
-				}
-				//increment the length of the list
-				this.length += 1;
-				return this;
-			};
-		
-			LinkedList.prototype.remove = function(obj){
-				var current = this.listHead;
-				if(current.data === obj){ 					//if it matches the first object just set it to the rest of the list
-					this.listHead = current.next;
-					this.length -= 1; 
-					return this
-					;
-				}else{
-					while(current && current.next.data !== obj){ //loop through the list until we fall off or find a match
-						current = current.next;
-					}
-					if(current.next.data === obj){  		// if we found a match then just skip over it to the next link
-						current.next = current.next.next;
-					}
-				}
-				if(current){  								//if we didn't fall off the list we decrement the length of the list
-					this.length -= 1;
-				}
-				return this;
-			};
-		
-			LinkedList.prototype.print = function(){
-				var tracer = this.listHead; //start at the beginning
-				while(tracer){				//while tracer isn't null continue
-					console.log(tracer.data);
-					tracer = tracer.next;
-				}
-			}
-		
-			LinkedList.prototype.exists = function(obj){
-				var tracer = this.listHead;
-				while(tracer){
-					if(tracer.data === obj)
-						return true;
-					tracer = tracer.next;
-				}
-				return false;
-			}
-		
-			LinkedList.prototype.swap = function(el, newEl){
-				var tracer = this.listHead;
-				while(tracer){
-					if(tracer.data === el){
-						tracer.data = newEl;
-					}
-					tracer = tracer.next;
-				}
-		
-			}
-		
-			var newRGraph = function(){
-					var RouteGraphs = {
-						numRoutes:0,
-						Routes:{},
-						addRoute:function(route_id){
-							if(!this.Routes[route_id]){
-								this.Routes[route_id] = new Graph();
-								this.numRoutes++;
-							}
-						},
-						printRouteGraph:function(route_id){
-							if(this.Routes[route_id])
-								this.Routes[route_id].toString();
-							else
-								console.log("Graph does not exist");
-						},
-						addEdgeToRoute:function(route_id,v1,v2){
-							this.addRoute(route_id);
-							this.Routes[route_id].addEdge(v1,v2);
-							return this;
-						},
-						getShortestPath:function(route_id,source,target){
-							var shortestPath;
-							if(!this.Routes[route_id]){
-								return [];
-							}
-							else{
-								shortestPath = bfs(this.Routes[route_id],source,target);
-							}
-							return shortestPath;
-						}	
+			
+				LinkedList.prototype.add = function(obj){
+			
+					var node = {
+						data:obj,
+						next:null
 					};
-					return RouteGraphs;
+					var current = this.listHead;
+					if(this.listHead === null)
+						this.listHead = node;
+					else{
+						while(current.next != null){ //loop till next node is empty
+							current = current.next;
+						}
+						//once it is empty set that link to the node;
+						current.next = node;
+					}
+					//increment the length of the list
+					this.length += 1;
+					return this;
+				};
+			
+				LinkedList.prototype.remove = function(obj){
+					var current = this.listHead;
+					if(current.data === obj){ 					//if it matches the first object just set it to the rest of the list
+						this.listHead = current.next;
+						this.length -= 1; 
+						return this
+						;
+					}else{
+						while(current && current.next.data !== obj){ //loop through the list until we fall off or find a match
+							current = current.next;
+						}
+						if(current.next.data === obj){  		// if we found a match then just skip over it to the next link
+							current.next = current.next.next;
+						}
+					}
+					if(current){  								//if we didn't fall off the list we decrement the length of the list
+						this.length -= 1;
+					}
+					return this;
+				};
+			
+				LinkedList.prototype.print = function(){
+					var tracer = this.listHead; //start at the beginning
+					while(tracer){				//while tracer isn't null continue
+						console.log(tracer.data);
+						tracer = tracer.next;
+					}
 				}
-				return newRGraph;
+			
+				LinkedList.prototype.exists = function(obj){
+					var tracer = this.listHead;
+					while(tracer){
+						if(tracer.data === obj)
+							return true;
+						tracer = tracer.next;
+					}
+					return false;
+				}
+			
+				LinkedList.prototype.swap = function(el, newEl){
+					var tracer = this.listHead;
+					while(tracer){
+						if(tracer.data === el){
+							tracer.data = newEl;
+						}
+						tracer = tracer.next;
+					}
+			
+				}
+			
+				var newRGraph = function(){
+						var RouteGraphs = {
+							numRoutes:0,
+							Routes:{},
+							addRoute:function(route_id){
+								if(!this.Routes[route_id]){
+									this.Routes[route_id] = new Graph();
+									this.numRoutes++;
+								}
+							},
+							printRouteGraph:function(route_id){
+								if(this.Routes[route_id])
+									this.Routes[route_id].toString();
+								else
+									console.log("Graph does not exist");
+							},
+							getRouteNodes:function(route_id){ // useful for debugging
+								if(this.Routes[route_id])
+									return this.Routes[route_id].getVerticies();
+								else
+									console.log("Graph does not exist");
+
+							},
+							addEdgeToRoute:function(route_id,v1,v2){
+								this.addRoute(route_id);
+								this.Routes[route_id].addEdge(v1,v2);
+								return this;
+							},
+							getShortestPath:function(route_id,source,target){
+								var shortestPath;
+								if(!this.Routes[route_id]){
+									return [];
+								}
+								else{
+									shortestPath = bfs(this.Routes[route_id],source,target);
+								}
+								return shortestPath;
+							}	
+						};
+						return RouteGraphs;
+					}
+					return newRGraph;
 	})();
 	////////////////////////////////////EndGraphModule////////////////////////////////////
 
@@ -308,7 +315,7 @@ var livegtfs = (function(){
 	var segmentTree = function() {
 		/*
 		   * interval-query
-		   * Copyright Ãƒâ€šÃ‚Â© 2012, Thomas OberndÃƒÆ’Ã‚Â¶rfer <toberndo@yarkon.de>
+		   * Copyright ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© 2012, Thomas OberndÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¶rfer <toberndo@yarkon.de>
 		   * MIT Licensed
 		*/
 		"use strict";  
@@ -840,9 +847,9 @@ var livegtfs = (function(){
 						exists = true;
 					} 
 				})
-				if (!exists){
+				//if (!exists){
 					stops.features.push(junctions[i]);
-				}
+				//}
 			}
 		}
 
@@ -958,9 +965,10 @@ var livegtfs = (function(){
 			feats.forEach(function(d){
 				var matrix = d.geometry.coordinates; 			//we have a multiline string so we start with a matrix of points
 				for(var i = 0; i < matrix.length; i++){  		//loop through each linestring
-					for(var j = i+1; j< matrix.length; j++){	//compare it with all linestrings ahead of it
+					for(var j = 0; j< matrix.length; j++){	//compare it with all linestrings ahead of it
 						for(var irunner=0; irunner < matrix[i].length; irunner++){ //compare each point in i's linestring
-							for(var jrunner=0; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
+							start = (i !== j)? 0:irunner+1 
+							for(var jrunner=start; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
 								var a = matrix[i][irunner];
 								var b = matrix[j][jrunner];
 								if( distance(a,b) === 0){
@@ -990,20 +998,24 @@ var livegtfs = (function(){
 
 		function distance(a,b){
 			return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );
-		}	
+		}
 	};
 	///////////////////////////////////EndPlotMod/////////////////////////////////////////
 
 	///////////////////////////////////Pather/////////////////////////////////////////////
 	var pather = (function(){
+
+
+		var graph = newRGraph()
+
 		var getPathCollection = function getPathCollection(routes,stations){
 			var pathCollection = []
 
-			routes.forEach(function(d,i,array){  //for each route
+			routes.forEach(function(d){  //for each route
 				var pathElement = {pathID:d.properties.route_id, stations: []} //create a element for the collection
-				stations.forEach(function(station,i,array){   //search through the stations 
+				stations.forEach(function(station){   //search through the stations 
 					station.properties.routes.forEach(function(route){
-						if(route == d.properties.route_id)             //if one has the same id
+						if(route === d.properties.route_id)             //if one has the same id
 							pathElement.stations.push(station);   //add it to the element list	
 					})
 					
@@ -1043,12 +1055,15 @@ var livegtfs = (function(){
 
 			var ret = getAllLines(newRoute.geometry,realStops);
 			var segmentsArr = ret.list;
-			var graph = ret.graph;
 			var plotObj;
 			routeSegments = mergeSegments(segmentsArr);
 			
 
-			return {routeSegments:routeSegments,'graph':graph};
+			return {routeSegments:routeSegments};
+
+					function deepCopy(obj){
+						return JSON.parse(JSON.stringify(obj));
+					}
 
 					function mergeSegments(SegmentList){
 						var mergedFeatureCollection = {
@@ -1073,7 +1088,6 @@ var livegtfs = (function(){
 
 					function getAllLines(MultiLineString,stops){
 						var LIST = []   
-						var graph = newRGraph();
 						var lines;
 						var ret;
 						MultiLineString.coordinates.forEach(function(d,i){
@@ -1083,7 +1097,7 @@ var livegtfs = (function(){
 							}
 						})
 						//var collection = mergeSegments(LIST);
-						return {list:LIST,graph:ret.graph};
+						return {list:LIST};
 					}
 						
 					function getStations(stops){
@@ -1164,12 +1178,13 @@ var livegtfs = (function(){
 											'type':'LineString',
 											'coordinates':range
 										},
-										'start':start,
-										'end':end
+										
 									};
+									obj.properties.start = start;
+									obj.properties.end = end;
 									graph.addEdgeToRoute(newRoute.properties.route_id,
-														nparse(obj.start.properties.stop_ids[0]),
-														nparse(obj.end.properties.stop_ids[0])
+														nparse(start.properties.stop_ids[0]),
+														nparse(end.properties.stop_ids[0])
 														);
 									return obj;
 						}
@@ -1202,13 +1217,15 @@ var livegtfs = (function(){
 										range = [];
 									else
 										range = getRange(lineString,lastIndex, i);//get the range of points on the lineString that lie between start and end points
+									if(range.length <2)	
+										continue
 									lastIndex = i;
 									
 									if(starts !== []){
 										starts.forEach(function(start){			  //for each stop in the starting points
 											temps.forEach(function(end){		  //for each stop in the ending points   ... i.e. cross product
 												//create a lineString Feature object with the same properties as the route with current start and stop stations.
-												var obj = builder(newRoute,range,start,end,graph);
+												var obj = deepCopy(builder(newRoute,range,start,end,graph));
 												routeSegments.features.push(obj);   //add that path to our list of segments;
 											})
 										});
@@ -1225,7 +1242,7 @@ var livegtfs = (function(){
 															'geometry':{type:'Point',coordinates:lineString[0]} };
 											
 										});
-										var obj = builder(newRoute,range,start,end,graph);
+										var obj = deepCopy(builder(newRoute,range,start,end,graph));
 										routeSegments.features.push(obj);
 									}
 									starts = temps;   //set the new starting node
@@ -1251,11 +1268,11 @@ var livegtfs = (function(){
 												coordinates:lineString[lineString.length]
 											} 
 										};
-									var obj = builder(newRoute,range,start,end,graph);
+									var obj = deepCopy(builder(newRoute,range,start,end,graph));
 									routeSegments.features.push(obj);   //add that path to our list of segments;
 								})									
 							}	
-							return {'lines':routeSegments,'graph':graph};	
+							return {'lines':routeSegments};	
 						}
 			
 		}
@@ -1270,7 +1287,7 @@ var livegtfs = (function(){
 			// }
 			return d;
 		}
-		return {getPathCollection:getPathCollection,getStops:getStops,getRouteSegs:getRouteSegs}
+		return {getPathCollection:getPathCollection,getStops:getStops,getRouteSegs:getRouteSegs,graph:graph}
 	})();
 	//////////////////////////////////EndPather//////////////////////////////////////////
 
@@ -1287,7 +1304,7 @@ var livegtfs = (function(){
 					.attr("id",function(d,i){ 
 					
 						str = "_s_"
-						+nparse(d.start.properties.stop_ids[0])+"_e_"+nparse(d.end.properties.stop_ids[0]);
+						+nparse(d.properties.start.properties.stop_ids[0])+"_e_"+nparse(d.properties.end.properties.stop_ids[0]);
 					return str;
 					
 					})
@@ -1296,6 +1313,12 @@ var livegtfs = (function(){
 					.style("stroke",function(d){var color = d.properties.route_color; if(color){return '#'+color;} return '#000' })
 					.style('fill','none')
 					.style('stroke-width','1pt')
+					.on('mouseover',function(d){
+						d3.select(this).style({'stroke-width':'16pt',opacity:'0.6'})
+					})
+					.on('mouseout',function(d){
+						d3.select(this).style({'stroke-width':'1pt',opacity:'0.6'})
+					})
 					.attr("d",path); 			
 		}
 
@@ -1395,11 +1418,10 @@ var livegtfs = (function(){
 
 
 
-
 		function parseTime(s) {
 		   	  var formatTime = d3.time.format("%X");
 			  var t = formatTime.parse(s);
-			  if (t != null && t.getHours() < 5) t.setDate(t.getDate() + 1);
+			  // if (t != null && t.getHours() < 5) t.setDate(t.getDate() + 1);
 			  return t;
 		}		
 
@@ -1515,8 +1537,7 @@ var livegtfs = (function(){
 
 			function moveTrip(value,map){
 				var intervalList = {};
-				map = d3.time.format('%X');
-				var v = timeToInt(map(value));
+				var v = timeToInt(d3.time.format('%X')(value));
 				var segTree = getSegTree();
 				segTree.queryPoint(v,function(results){
 					results.forEach(function(result){
@@ -1526,7 +1547,6 @@ var livegtfs = (function(){
 				})
 				if(intervalList){
 					var activeTrips = Object.keys(intervalList);
-
 					var trips = d3.select("#plot").selectAll(".trip").data(activeTrips);
 					trips.enter().append("circle")
 					trips.attr("class","trip")
@@ -1545,16 +1565,16 @@ var livegtfs = (function(){
 								identifier = '.'+interval.lineClass+'#_s_'+interval.stop_id+'_e_'+interval.start_id
 								path1 = d3.select(identifier).node();
 								if( path1 === null)
-									return 'translate(0,0)';
+									return 'translate(50,50)';
 								reverse = true;
 							}
 
 							var length = path1.getTotalLength();   //get length of the curve
-							var shift = timeToInt(interval.start);
-							var	time = (timeToInt(map(value))-shift)/(timeToInt(interval.stop) - shift);   //calc % point in time interval
+							var shift = map(parseTime(interval.start));
+							var	time = (map(value)-shift)/(map(parseTime(interval.stop)) - shift);   //calc % point in time interval
 							
 							if(!isFinite(time*length)){
-								return "translate(0,0)";
+								return "translate(50,50)";
 							}
 							var p;
 							if(reverse)
@@ -1590,29 +1610,37 @@ var livegtfs = (function(){
 
 
 			function timeToInt(time){
-				var val= parseInt(time.substring(0,2))  * 3600
-					   + parseInt(time.substring(3,5)) * 60 
-					   + parseInt(time.substring(6,8)) 
+				var place = 1;
+				var val = 0;
+				for(var i = time.length-1; i>=0; i--){
+					var d = parseInt(time[i]);
+					if(!isNaN(d)){
+						val += d*place;
+						place = place * 10;
+					}
+				}
 				return val;
 			}
 			var tripSetter =(function(){ 
 				var built = false;
 				var isBuilt = function(){return built};
 				var setBuilt = function(){built = true};
+
 				return {
 					setTrip:function(Element,data,times){
-						var segTree = getSegTree(),start,end;
-						parseRouteData(data,segTree);
+						var segTree = getSegTree();
+						if(arguments[3]){
+							parseRouteData(data.intervalObj['route_'+arguments[3]],segTree);
+						}else{
+						 	parseRouteData(data,segTree);	
+						}
 						segTree.buildTree();
-						if(times){
-							start = times.start;
-							end = times.end;	
+						if(!times){
+							
 						}
 						var s = slider(); 
 						if(!isBuilt()){
-							s.buildSlider(Element,
-								start || "09:00:00",
-								end || "17:30:00");
+							s.buildSlider(Element,times.start,times.end);
 							setBuilt();
 						}
 					}
@@ -1682,10 +1710,11 @@ var livegtfs = (function(){
 
 			return {tripSetter:tripSetter}
 	})();
+
 	///////////////////////////////////EndMover///////////////////////////////////////////
 
 
 
-	return {'gtfsData':gtfsDataMod, 'plotter':plotMod, 'pather':pathPlotter, 'mover':mover};
+	return {'gtfsData':gtfsDataMod, 'plotter':plotMod, 'pather':pathPlotter, 'mover':mover, other:pather};
 
 })();

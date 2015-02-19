@@ -4,9 +4,10 @@
 <head>
 	<title> API TEST </title>
 <style>
-path:hover{
+	path:hover{
   stroke-width:16px;
 }
+
 </style>
 </head>
 <body>
@@ -34,28 +35,37 @@ path:hover{
 			var el = d3.select('body').append('div');
 			var plotter = livegtfs.plotter(el);
 			var plotObj={};
-				fetcher.getRouteTrips(109,'MONDAY',function(data){
-						// var trips = data.trips;
-						// var keys = Object.keys(trips);
-						// keys.forEach(function(trip){
-						// 	if(trip !== 'B20140608WKD_035350_F..N69R')
-						// 		delete trips[trip];
+				fetcher.getRouteTrips(12,'MONDAY',function(data){
+						// console.log(data);
+						// var routes = data.intervalObj;
+						// var keys = Object.keys(routes);
+						// keys.forEach(function(r){
+
+						// 	if(r === 'route_A'){
+						// 		var trips = routes[r].trips;
+						// 		ks = Object.keys(trips);
+						// 		ks.forEach(function(t){
+						// 			if(t !== "B20140608WKD_027700_A..N09R")
+						// 				delete trips[t];
+						// 		})
+						// 	}else
+						// 		delete routes[r]
 						// })
-						livegtfs.mover.tripSetter.setTrip(el,data,{start:'05:24:00',end:'06:49:00'});
+						livegtfs.mover.tripSetter.setTrip(el,data,{start:'06:37:00',end:'08:20:00'},'531-142');
 				 })
-				fetcher.getRoutes(109,function(rdata){
+				fetcher.getRoutes(12,function(rdata){
 					console.log('routes',rdata);
 					var junctions = plotter.junctionUtil.getJuncs(rdata);
-					//plotter.plotRoutes(rdata,'plot',40)
-					fetcher.getStops(109,{Type:'FeatureCollection'},function(sdata){
+					//rdata.features[rdata.features.length-1].geometry.coordinates.splice(1,1);
+					//plotter.plotRoutes(rdata,'plot',10000,'905-142')
+					fetcher.getStops(12,{Type:'FeatureCollection'},function(sdata){
 						console.log('stops',sdata);
 						sdata = fuzzyfixer(rdata,sdata)
 						plotter.junctionUtil.mergeJuncs(sdata,junctions);
-						plotObj = {data:sdata,plotId:'plot',scaleFactor:40}			
+						plotObj = {data:sdata,plotId:'plot',scaleFactor:50}			
 						console.log(sdata);
-						plotter.plotStops(sdata,'plot',40,junctions);
-						livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj);
-
+						plotter.plotStops(sdata,'plot',50,junctions,'531-142');
+						livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj,'531-142');
 					});
 				});
 

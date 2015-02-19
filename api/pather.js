@@ -1,7 +1,3 @@
-//example pather.js
-//pather.js
-
-
 	if(typeof newRGraph =='undefined' && typeof require !=='undefined'){ //if we are in the server version
 		newRGraph = require('./graphstruct.js').newRGraph;
 		nparse = require('./nparse.js');
@@ -63,6 +59,10 @@ var pather = (function(){
 		
 
 		return {routeSegments:routeSegments};
+
+				function deepCopy(obj){
+					return JSON.parse(JSON.stringify(obj));
+				}
 
 				function mergeSegments(SegmentList){
 					var mergedFeatureCollection = {
@@ -177,12 +177,13 @@ var pather = (function(){
 										'type':'LineString',
 										'coordinates':range
 									},
-									'start':start,
-									'end':end
+									
 								};
+								obj.properties.start = start;
+								obj.properties.end = end;
 								graph.addEdgeToRoute(newRoute.properties.route_id,
-													nparse(obj.start.properties.stop_ids[0]),
-													nparse(obj.end.properties.stop_ids[0])
+													nparse(start.properties.stop_ids[0]),
+													nparse(end.properties.stop_ids[0])
 													);
 								return obj;
 					}
@@ -215,13 +216,15 @@ var pather = (function(){
 									range = [];
 								else
 									range = getRange(lineString,lastIndex, i);//get the range of points on the lineString that lie between start and end points
+								if(range.length <2)	
+									continue
 								lastIndex = i;
 								
 								if(starts !== []){
 									starts.forEach(function(start){			  //for each stop in the starting points
 										temps.forEach(function(end){		  //for each stop in the ending points   ... i.e. cross product
 											//create a lineString Feature object with the same properties as the route with current start and stop stations.
-											var obj = builder(newRoute,range,start,end,graph);
+											var obj = deepCopy(builder(newRoute,range,start,end,graph));
 											routeSegments.features.push(obj);   //add that path to our list of segments;
 										})
 									});
@@ -238,7 +241,7 @@ var pather = (function(){
 														'geometry':{type:'Point',coordinates:lineString[0]} };
 										
 									});
-									var obj = builder(newRoute,range,start,end,graph);
+									var obj = deepCopy(builder(newRoute,range,start,end,graph));
 									routeSegments.features.push(obj);
 								}
 								starts = temps;   //set the new starting node
@@ -264,7 +267,7 @@ var pather = (function(){
 											coordinates:lineString[lineString.length]
 										} 
 									};
-								var obj = builder(newRoute,range,start,end,graph);
+								var obj = deepCopy(builder(newRoute,range,start,end,graph));
 								routeSegments.features.push(obj);   //add that path to our list of segments;
 							})									
 						}	

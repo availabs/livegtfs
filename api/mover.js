@@ -1,7 +1,3 @@
-//plotter
-
-
-
 var mover = (function(){
 	var tripRanges = {
 		ranges:{},
@@ -22,7 +18,7 @@ var mover = (function(){
 	function parseTime(s) {
 	   	  var formatTime = d3.time.format("%X");
 		  var t = formatTime.parse(s);
-		  if (t != null && t.getHours() < 5) t.setDate(t.getDate() + 1);
+		  // if (t != null && t.getHours() < 5) t.setDate(t.getDate() + 1);
 		  return t;
 	}		
 
@@ -166,7 +162,7 @@ var mover = (function(){
 							identifier = '.'+interval.lineClass+'#_s_'+interval.stop_id+'_e_'+interval.start_id
 							path1 = d3.select(identifier).node();
 							if( path1 === null)
-								return 'translate(0,0)';
+								return 'translate(50,50)';
 							reverse = true;
 						}
 
@@ -175,7 +171,7 @@ var mover = (function(){
 						var	time = (map(value)-shift)/(map(parseTime(interval.stop)) - shift);   //calc % point in time interval
 						
 						if(!isFinite(time*length)){
-							return "translate(0,0)";
+							return "translate(50,50)";
 						}
 						var p;
 						if(reverse)
@@ -230,14 +226,18 @@ var mover = (function(){
 			return {
 				setTrip:function(Element,data,times){
 					var segTree = getSegTree();
-					parseRouteData(data,segTree);
+					if(arguments[3]){
+						parseRouteData(data.intervalObj['route_'+arguments[3]],segTree);
+					}else{
+					 	parseRouteData(data,segTree);	
+					}
 					segTree.buildTree();
 					if(!times){
 						
 					}
 					var s = slider(); 
 					if(!isBuilt()){
-						s.buildSlider(Element,"06:20:00","10:30:00");
+						s.buildSlider(Element,times.start,times.end);
 						setBuilt();
 					}
 				}

@@ -67,9 +67,9 @@ var plotMod = function(Element){
 					exists = true;
 				} 
 			})
-			if (!exists){
+			//if (!exists){
 				stops.features.push(junctions[i]);
-			}
+			//}
 		}
 	}
 
@@ -185,9 +185,10 @@ var plotMod = function(Element){
 		feats.forEach(function(d){
 			var matrix = d.geometry.coordinates; 			//we have a multiline string so we start with a matrix of points
 			for(var i = 0; i < matrix.length; i++){  		//loop through each linestring
-				for(var j = i+1; j< matrix.length; j++){	//compare it with all linestrings ahead of it
+				for(var j = 0; j< matrix.length; j++){	//compare it with all linestrings ahead of it
 					for(var irunner=0; irunner < matrix[i].length; irunner++){ //compare each point in i's linestring
-						for(var jrunner=0; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
+						start = (i !== j)? 0:irunner+1 
+						for(var jrunner=start; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
 							var a = matrix[i][irunner];
 							var b = matrix[j][jrunner];
 							if( distance(a,b) === 0){
