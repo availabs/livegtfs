@@ -961,8 +961,6 @@ var livegtfs = (function(){
 			return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );
 		}
 	};
-
-
 	///////////////////////////////////EndPlotMod/////////////////////////////////////////
 
 	///////////////////////////////////Pather/////////////////////////////////////////////
@@ -1626,8 +1624,8 @@ var livegtfs = (function(){
 							}
 
 							var length = path1.getTotalLength();   //get length of the curve
-							var shift = map(parseTime(interval.start));
-							var	time = (map(value)-shift)/(map(parseTime(interval.stop)) - shift);   //calc % point in time interval
+							var shift = parseTime(interval.start).getTime();
+							var	time = (value.getTime()-shift)/(parseTime(interval.stop).getTime() - shift);   //calc % point in time interval
 							
 							if(!isFinite(time*length)){
 								return "translate(50,50)";
@@ -1766,7 +1764,6 @@ var livegtfs = (function(){
 
 			return {tripSetter:tripSetter}
 	})();
-
 	///////////////////////////////////EndMover///////////////////////////////////////////
 
 
