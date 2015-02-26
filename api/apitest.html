@@ -35,6 +35,7 @@
 			var el = d3.select('body').append('div');
 			var plotter = livegtfs.plotter(el);
 			var plotObj={};
+			var util = livegtfs.other;
 				fetcher.getRouteTrips(12,'MONDAY',function(data){
 						// console.log(data);
 						// var routes = data.intervalObj;
@@ -53,22 +54,27 @@
 						// })
 						livegtfs.mover.tripSetter.setTrip(el,data,{start:'06:37:00',end:'08:20:00'},'531-142');
 				 })
-				fetcher.getRoutes(12,function(rdata){
-					console.log('routes',rdata);
-					var junctions = plotter.junctionUtil.getJuncs(rdata);
-					//rdata.features[rdata.features.length-1].geometry.coordinates.splice(1,1);
-					//plotter.plotRoutes(rdata,'plot',10000,'905-142')
-					fetcher.getStops(12,{Type:'FeatureCollection'},function(sdata){
-						console.log('stops',sdata);
-						sdata = fuzzyfixer(rdata,sdata)
-						plotter.junctionUtil.mergeJuncs(sdata,junctions);
-						plotObj = {data:sdata,plotId:'plot',scaleFactor:50}			
-						console.log(sdata);
-						plotter.plotStops(sdata,'plot',50,junctions,'531-142');
-						livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj,'531-142');
-					});
-				});
+				// fetcher.getRoutes(12,function(rdata){
+				// 	console.log('routes',rdata);
+				// 	var junctions = util.junctionUtil.getJuncs(rdata);
+				// 	//rdata.features[rdata.features.length-1].geometry.coordinates.splice(1,1);
+				// 	//plotter.plotRoutes(rdata,'plot',10000,'905-142')
+				// 	fetcher.getStops(12,{Type:'FeatureCollection'},function(sdata){
+				// 		console.log('stops',sdata);
+				// 		sdata = fuzzyfixer(rdata,sdata)
+				// 		util.junctionUtil.mergeJuncs(sdata,junctions);
+				// 		plotObj = {data:sdata,plotId:'plot',scaleFactor:50}			
+				// 		console.log(sdata);
+				// 		// plotter.plotStops(sdata,'plot',50,junctions,'531-142');
+				// 		livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj);
+				// 	});
+				// });
 
+				fetcher.getSegmentData(12,function(segData){
+					console.log(segData);
+					var plotObj = {data:segData.stops,plotId:'plot',scaleFactor:50};
+					livegtfs.pather.plotSegs(segData.segments,plotObj,'531-142');
+				})
 				
 			
 

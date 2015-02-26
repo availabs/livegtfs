@@ -670,7 +670,7 @@ var livegtfs = (function(){
 		}
 
 		var test = false;
-			var HOST = "http://localhost:1337"
+		var HOST = "http://localhost:1337"
 			var getRoutesData = function getRoutesData(AgencyID,cb){
 				//We use the availabs api to retrieve route data of specified id
 				if(reqUndef(AgencyID,'AgencyID'))
@@ -690,12 +690,23 @@ var livegtfs = (function(){
 				});
 			};
 
+			var getSegmentData = function getSegmentData(AgencyID,cb){
+				if(reqUndef(AgencyID,'AgencyID'))
+					return;
+				if(haveReqFunc(cb))
+					var segUrl = HOST+'/agency/'+AgencyID+'/segmentData';
+				else
+					return
+				currentAgency = AgencyID;
+				d3.json(segUrl,function(err,data){
+					if(err) console.log(err);
+					callback(cb,data);
+				})
+			};
+
 			var getStopsData = function getStopsData(AgencyID,opts){
 				if(reqUndef(AgencyID,'AgencyID'))
 					return;		
-
-				
-
 				var stopUrl = HOST+"/agency/"+AgencyID+"/stops";
 				if(opts){
 					if(test){
@@ -771,7 +782,8 @@ var livegtfs = (function(){
 				'getRoutes': getRoutesData,
 				'getStops' : getStopsData,
 				'getTrips' : getTripsData,
-				'getRouteTrips' : getRouteTripsData
+				'getRouteTrips' : getRouteTripsData,
+				'getSegmentData':getSegmentData
 			}
 
 	})();
@@ -834,24 +846,7 @@ var livegtfs = (function(){
 		 
 		}
 
-		var junctionUtil = {};
-		junctionUtil.getJuncs = function getJuncs(RouteData){
-			return findJunctions(RouteData.features);
-		};
-		junctionUtil.mergeJuncs = function mergeJuncs(stops,junctions){
-			for (var i =0; i< junctions.length; i++){
-				var junc = junctions[i].geometry.coordinates;
-				var exists = false;
-				stops.features.forEach(function(d,i){
-					if (distance(d.geometry.coordinates,junc) === 0){
-						exists = true;
-					} 
-				})
-				//if (!exists){
-					stops.features.push(junctions[i]);
-				//}
-			}
-		}
+		
 
 
 
@@ -933,7 +928,7 @@ var livegtfs = (function(){
 					
 			return plotObj;
 		};
-		return {plotRoutes:plotRoutes,plotStops:plotStops,junctionUtil:junctionUtil};
+		return {plotRoutes:plotRoutes,plotStops:plotStops};
 
 		/*{type:'Feature',properties:{}, geometry:test}*/
 		// function setup(GeoData,plotId,scaleFactor){
@@ -960,46 +955,14 @@ var livegtfs = (function(){
 			})
 		}
 
-		function findJunctions(feats){
-			var eqpts = [];
-			feats.forEach(function(d){
-				var matrix = d.geometry.coordinates; 			//we have a multiline string so we start with a matrix of points
-				for(var i = 0; i < matrix.length; i++){  		//loop through each linestring
-					for(var j = 0; j< matrix.length; j++){	//compare it with all linestrings ahead of it
-						for(var irunner=0; irunner < matrix[i].length; irunner++){ //compare each point in i's linestring
-							start = (i !== j)? 0:irunner+1 
-							for(var jrunner=start; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
-								var a = matrix[i][irunner];
-								var b = matrix[j][jrunner];
-								if( distance(a,b) === 0){
-									var index = -1;
-									eqpts.forEach(function(junc,i){
-										if(distance(junc.geometry.coordinates,a) === 0){
-											index = i;
-										}
-									})
-									if(index >= 0){
-										if(eqpts[index].properties.routes.indexOf(d.properties.route_id)<0)
-											eqpts[index].properties.routes.push(d.properties.route_id); 
-									}else{
-										var k =eqpts.length;
-										var f = {type:"Feature",geometry:{type:'Point',coordinates:a},properties:{station_name:'j'+k,stop_id:'j'+k,stop_name:'junction'+k,routes:[d.properties.route_id]}};
-										eqpts.push(f);	
-									}
-									
-								}
-							}
-						}
-					}
-				}	
-			})	
-			return eqpts;
-		}
+
 
 		function distance(a,b){
 			return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );
 		}
 	};
+
+
 	///////////////////////////////////EndPlotMod/////////////////////////////////////////
 
 	///////////////////////////////////Pather/////////////////////////////////////////////
@@ -1274,7 +1237,74 @@ var livegtfs = (function(){
 							}	
 							return {'lines':routeSegments};	
 						}
+
+
 			
+		}
+
+		var nrGen = function(routes,stops){
+				pathcoll = getPathCollection(routes,stops);
+				return function(id){
+						var	newroute = getStops(id, routes, pathcoll);
+						var routeSegments = getRouteSegs(newroute).routeSegments;
+						return routeSegments;
+				};
+			}
+
+
+			function findJunctions(feats){
+			var eqpts = [];
+			feats.forEach(function(d){
+				var matrix = d.geometry.coordinates; 			//we have a multiline string so we start with a matrix of points
+				for(var i = 0; i < matrix.length; i++){  		//loop through each linestring
+					for(var j = 0; j< matrix.length; j++){	//compare it with all linestrings ahead of it
+						for(var irunner=0; irunner < matrix[i].length; irunner++){ //compare each point in i's linestring
+							start = (i !== j)? 0:irunner+1 
+							for(var jrunner=start; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
+								var a = matrix[i][irunner];
+								var b = matrix[j][jrunner];
+								if( distance(a,b) === 0){
+									var index = -1;
+									eqpts.forEach(function(junc,i){
+										if(distance(junc.geometry.coordinates,a) === 0){
+											index = i;
+										}
+									})
+									if(index >= 0){
+										if(eqpts[index].properties.routes.indexOf(d.properties.route_id)<0)
+											eqpts[index].properties.routes.push(d.properties.route_id); 
+									}else{
+										var k =eqpts.length;
+										var f = {type:"Feature",geometry:{type:'Point',coordinates:a},properties:{station_name:'j'+k,stop_id:'j'+k,stop_name:'junction'+k,routes:[d.properties.route_id]}};
+										eqpts.push(f);	
+									}
+									
+								}
+							}
+						}
+					}
+				}	
+			})	
+			return eqpts;
+		}
+
+		var junctionUtil = {};
+		junctionUtil.getJuncs = function getJuncs(RouteData){
+			return findJunctions(RouteData.features);
+		};
+		junctionUtil.mergeJuncs = function mergeJuncs(stops,junctions){
+			for (var i =0; i< junctions.length; i++){
+				var junc = junctions[i].geometry.coordinates;
+				var exists = false;
+				stops.features.forEach(function(d,i){
+					if (distance(d.geometry.coordinates,junc) === 0){
+						exists = true;
+					} 
+				})
+				//if (!exists){
+					stops.features.push(junctions[i]);
+				//}
+			}
 		}
 
 		function distance(a,b){
@@ -1287,7 +1317,7 @@ var livegtfs = (function(){
 			// }
 			return d;
 		}
-		return {getPathCollection:getPathCollection,getStops:getStops,getRouteSegs:getRouteSegs,graph:graph}
+		return {junctionUtil:junctionUtil,getPathCollection:getPathCollection,getStops:getStops,getRouteSegs:getRouteSegs,nrGen:nrGen,graph:graph}
 	})();
 	//////////////////////////////////EndPather//////////////////////////////////////////
 
@@ -1322,9 +1352,8 @@ var livegtfs = (function(){
 					.attr("d",path); 			
 		}
 
-		var plotter = function plotter(routes,id,pathcoll,settings){
-			var	newroute = pather.getStops(id, routes, pathcoll);
-			var routeSegments = pather.getRouteSegs(newroute).routeSegments;
+		var plotter = function plotter(id,generator,settings){
+			var routeSegments = generator(id);
 			if(routeSegments.features.length >0){
 				if(typeof settings.path !== 'undefined'){
 					plotNewRoute(routeSegments,settings.path);
@@ -1337,14 +1366,41 @@ var livegtfs = (function(){
 			return routeSegments;
 		}
 
-		var plotPathedRoutes = function plotPathedRoutes(routes,stops,settings,routeId){
-			var pathcoll = pather.getPathCollection(routes,stops);
+		var checkSettings = function(settings){
 			if(typeof settings === 'undefined' ||  (typeof settings.path === 'undefined' && typeof settings.data.transform === 'undefined') ){
 				throw {
 						name:'UsageError',
 						message: 'need existing plot settings or data defined transform and bounding box'
 					};
 			}
+		}
+
+		var plotSegments = function(segData,settings,id){
+			var routeIds = Object.keys(segData), path;
+			checkSettings(settings);
+			if(typeof settings.path === 'undefined'){
+				path = plotCalcs(settings.data,settings.plotId,settings.scaleFactor).path;
+			}else{
+				path = settings.path;
+			}
+			if(!id){
+				routeIds.forEach(function(id){
+					if(segData[id].features.length > 0)
+						plotNewRoute(segData[id],path);
+				})
+			}else{
+				if(routeIds.indexOf(id) < 0)
+					console.log('Unknown Route')
+				else if(segData[id].features.length > 0)
+					plotNewRoute(segData[id],path);
+				else
+					console.log('Empty Route')
+			}
+		}
+
+		var plotPathedRoutes = function plotPathedRoutes(routes,stops,settings,routeId){
+			var generator = pather.nrGen(routes,stops);
+			checkSettings(settings);
 			if(!settings.path){
 				settings.path = plotCalcs(settings.data,settings.plotId,settings.scaleFactor).path;
 			}
@@ -1352,10 +1408,10 @@ var livegtfs = (function(){
 				if(route.geometry.coordinates.length > 0){
 					if(routeId){
 						if(routeId === route.properties.route_id){
-							plotter(routes,route.properties.route_id,pathcoll,settings);	
+							plotter(route.properties.route_id,generator,settings);	
 						}
 					}else{
-						plotter(routes,route.properties.route_id,pathcoll,settings);
+						plotter(route.properties.route_id,generator,settings);
 					}
 				}
 			})
@@ -1395,7 +1451,7 @@ var livegtfs = (function(){
 		}
 
 		
-		return {plotPaths:plotPathedRoutes};
+		return {plotPaths:plotPathedRoutes,plotSegs:plotSegments};
 
 	})()
 	///////////////////////////////////EndpathPlotter//////////////////////////////////////////

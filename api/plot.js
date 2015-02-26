@@ -54,24 +54,7 @@ var plotMod = function(Element){
 	 
 	}
 
-	var junctionUtil = {};
-	junctionUtil.getJuncs = function getJuncs(RouteData){
-		return findJunctions(RouteData.features);
-	};
-	junctionUtil.mergeJuncs = function mergeJuncs(stops,junctions){
-		for (var i =0; i< junctions.length; i++){
-			var junc = junctions[i].geometry.coordinates;
-			var exists = false;
-			stops.features.forEach(function(d,i){
-				if (distance(d.geometry.coordinates,junc) === 0){
-					exists = true;
-				} 
-			})
-			//if (!exists){
-				stops.features.push(junctions[i]);
-			//}
-		}
-	}
+	
 
 
 
@@ -153,7 +136,7 @@ var plotMod = function(Element){
 				
 		return plotObj;
 	};
-	return {plotRoutes:plotRoutes,plotStops:plotStops,junctionUtil:junctionUtil};
+	return {plotRoutes:plotRoutes,plotStops:plotStops};
 
 	/*{type:'Feature',properties:{}, geometry:test}*/
 	// function setup(GeoData,plotId,scaleFactor){
@@ -180,41 +163,7 @@ var plotMod = function(Element){
 		})
 	}
 
-	function findJunctions(feats){
-		var eqpts = [];
-		feats.forEach(function(d){
-			var matrix = d.geometry.coordinates; 			//we have a multiline string so we start with a matrix of points
-			for(var i = 0; i < matrix.length; i++){  		//loop through each linestring
-				for(var j = 0; j< matrix.length; j++){	//compare it with all linestrings ahead of it
-					for(var irunner=0; irunner < matrix[i].length; irunner++){ //compare each point in i's linestring
-						start = (i !== j)? 0:irunner+1 
-						for(var jrunner=start; jrunner< matrix[j].length; jrunner++){ //to each point of j's linestring
-							var a = matrix[i][irunner];
-							var b = matrix[j][jrunner];
-							if( distance(a,b) === 0){
-								var index = -1;
-								eqpts.forEach(function(junc,i){
-									if(distance(junc.geometry.coordinates,a) === 0){
-										index = i;
-									}
-								})
-								if(index >= 0){
-									if(eqpts[index].properties.routes.indexOf(d.properties.route_id)<0)
-										eqpts[index].properties.routes.push(d.properties.route_id); 
-								}else{
-									var k =eqpts.length;
-									var f = {type:"Feature",geometry:{type:'Point',coordinates:a},properties:{station_name:'j'+k,stop_id:'j'+k,stop_name:'junction'+k,routes:[d.properties.route_id]}};
-									eqpts.push(f);	
-								}
-								
-							}
-						}
-					}
-				}
-			}	
-		})	
-		return eqpts;
-	}
+
 
 	function distance(a,b){
 		return Math.sqrt( ( a[0] - b[0] ) * ( a[0] - b[0] ) + ( a[1] - b[1] ) * ( a[1] - b[1] ) );

@@ -28,9 +28,8 @@ var pathPlotter = (function(){
 				.attr("d",path); 			
 	}
 
-	var plotter = function plotter(routes,id,pathcoll,settings){
-		var	newroute = pather.getStops(id, routes, pathcoll);
-		var routeSegments = pather.getRouteSegs(newroute).routeSegments;
+	var plotter = function plotter(id,generator,settings){
+		var routeSegments = generator(id);
 		if(routeSegments.features.length >0){
 			if(typeof settings.path !== 'undefined'){
 				plotNewRoute(routeSegments,settings.path);
@@ -43,14 +42,41 @@ var pathPlotter = (function(){
 		return routeSegments;
 	}
 
-	var plotPathedRoutes = function plotPathedRoutes(routes,stops,settings,routeId){
-		var pathcoll = pather.getPathCollection(routes,stops);
+	var checkSettings = function(settings){
 		if(typeof settings === 'undefined' ||  (typeof settings.path === 'undefined' && typeof settings.data.transform === 'undefined') ){
 			throw {
 					name:'UsageError',
 					message: 'need existing plot settings or data defined transform and bounding box'
 				};
 		}
+	}
+
+	var plotSegments = function(segData,settings,id){
+		var routeIds = Object.keys(segData), path;
+		checkSettings(settings);
+		if(typeof settings.path === 'undefined'){
+			path = plotCalcs(settings.data,settings.plotId,settings.scaleFactor).path;
+		}else{
+			path = settings.path;
+		}
+		if(!id){
+			routeIds.forEach(function(id){
+				if(segData[id].features.length > 0)
+					plotNewRoute(segData[id],path);
+			})
+		}else{
+			if(routeIds.indexOf(id) < 0)
+				console.log('Unknown Route')
+			else if(segData[id].features.length > 0)
+				plotNewRoute(segData[id],path);
+			else
+				console.log('Empty Route')
+		}
+	}
+
+	var plotPathedRoutes = function plotPathedRoutes(routes,stops,settings,routeId){
+		var generator = pather.nrGen(routes,stops);
+		checkSettings(settings);
 		if(!settings.path){
 			settings.path = plotCalcs(settings.data,settings.plotId,settings.scaleFactor).path;
 		}
@@ -58,10 +84,10 @@ var pathPlotter = (function(){
 			if(route.geometry.coordinates.length > 0){
 				if(routeId){
 					if(routeId === route.properties.route_id){
-						plotter(routes,route.properties.route_id,pathcoll,settings);	
+						plotter(route.properties.route_id,generator,settings);	
 					}
 				}else{
-					plotter(routes,route.properties.route_id,pathcoll,settings);
+					plotter(route.properties.route_id,generator,settings);
 				}
 			}
 		})
@@ -101,6 +127,6 @@ var pathPlotter = (function(){
 	}
 
 	
-	return {plotPaths:plotPathedRoutes};
+	return {plotPaths:plotPathedRoutes,plotSegs:plotSegments};
 
 })()

@@ -33,7 +33,7 @@ var gtfsDataMod = (function(){
 		}
 
 		var test = false;
-			var HOST = "http://localhost:1337"
+		var HOST = "http://localhost:1337"
 			var getRoutesData = function getRoutesData(AgencyID,cb){
 				//We use the availabs api to retrieve route data of specified id
 				if(reqUndef(AgencyID,'AgencyID'))
@@ -53,12 +53,23 @@ var gtfsDataMod = (function(){
 				});
 			};
 
+			var getSegmentData = function getSegmentData(AgencyID,cb){
+				if(reqUndef(AgencyID,'AgencyID'))
+					return;
+				if(haveReqFunc(cb))
+					var segUrl = HOST+'/agency/'+AgencyID+'/segmentData';
+				else
+					return
+				currentAgency = AgencyID;
+				d3.json(segUrl,function(err,data){
+					if(err) console.log(err);
+					callback(cb,data);
+				})
+			};
+
 			var getStopsData = function getStopsData(AgencyID,opts){
 				if(reqUndef(AgencyID,'AgencyID'))
 					return;		
-
-				
-
 				var stopUrl = HOST+"/agency/"+AgencyID+"/stops";
 				if(opts){
 					if(test){
@@ -134,7 +145,8 @@ var gtfsDataMod = (function(){
 				'getRoutes': getRoutesData,
 				'getStops' : getStopsData,
 				'getTrips' : getTripsData,
-				'getRouteTrips' : getRouteTripsData
+				'getRouteTrips' : getRouteTripsData,
+				'getSegmentData':getSegmentData
 			}
 
 	})();
