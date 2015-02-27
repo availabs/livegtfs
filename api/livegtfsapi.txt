@@ -24,6 +24,10 @@ gtfsData.getTrips(AgencyId,Day,Route_ID,cb) -- retrieve raw data for a particula
 	Route_ID -- OPTIONAL, specify a particular route id
 	cb  -- function to execute when data is returned, should accept one parameter for the data
 
+gtfsData.getSegmentData(AgencyID,cb) -- retrieve pre-segmented route elements for a particular agency
+	AgencyID -- the id of the particular agency (ex NYCMTA is 109)
+	cb -- function to execute when the data is returned, should accept one parameter for the data
+
 Moving Api
 
 mover.tripSetter.setTrip(Element,data,times) -- using precomputed data from getRouteTrips 
@@ -64,11 +68,19 @@ plotter.plotStops(StopData,plotId,scaleFactor,junctions,RouteID) -- plot the sto
 		junctions   -- OPTIONAL param if used with route data
 		RouteID     -- OPTIONAL param used to plot stops associated with only one route or area
 
-plotter.junctionUtil.getJuncs(RouteData) -- function that locates all points at which two 
+plotter.plotSegs(SegData,settings,RouteID) -- plot the segments retrieved from the server
+		
+		SegData -- presegmented route data, in the format that the server generates
+		settings -- an object with settings including {referenceData,id Of Div, scaleFactor}
+		RouteID -- OPTIONAL, the name of the single route to be plotteed instead of the entire collection
+
+
+
+other.junctionUtil.getJuncs(RouteData) -- function that locates all points at which two 
 											linestrings of a greater multiline strings meet 
 	RouteData -- A FeatureCollection of routes 
 
-plotter.junctionUtil.mergeJuncs(stops,junctions) -- changes stops to the union of stops and 
+other.junctionUtil.mergeJuncs(stops,junctions) -- changes stops to the union of stops and 
 													junctions based on location.
 		stops -- featureCollection of stops 
 		junctions -- collections of junction points returned by getJuncs()
