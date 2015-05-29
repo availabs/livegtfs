@@ -74,11 +74,17 @@ var gtfsDataMod = (function(){
 				if(opts){
 					if(test){
 						stopUrl = 'sampleStops.json';
+					}else{
+						stopUrl +='?'
+						var route_id = (typeof opts.routearg === 'string')? routearg: undefined;
+						if(!udef(route_id)){
+							stopUrl += '&routeId='+ route_id;
+						}
+						if(opts.format){
+							stopUrl += '&format=' + opts.format
+						}
 					}
-					var route_id = (typeof opts.routearg === 'string')? routearg: undefined;
-					if(!udef(route_id)){
-						stopUrl += '?'+ route_id;
-					}
+					
 				}
 				var cb = arguments[arguments.length-1];     //callback will always be the last one
 				if(!haveReqFunc(cb))
@@ -111,11 +117,34 @@ var gtfsDataMod = (function(){
 				var tripURL = HOST+'/agency/'+AgencyID+'/routes/'+Route_ID+'/schedule?day='+Day;
 
 				d3.json(tripURL,function(err,data){
-					if(err) console.log(err);
-					callback(cb,data);
+					if(err) console.log(err);		
+					tdata = {}
+					data.forEach(function(el){
+						if(!tdata[el.trip_id])
+							tdata[el.trip_id] = []
+						tdata[el.trip_id].push(el)
+					})
+					console.log(data)
+					var keys = Object.keys(tdata)
+					keys.forEach(function(key){
+						var list = tdata[key],p1,p2;
+						var objList = [];
+						for(var i=0; i<list.length-1; i++){
+							p1 = list[i]; p2 = list[i+1];
+							objList.push({
+								start_id:p1.stop_id,
+								stop_id: p2.stop_id,
+								start:   p1.departure_time,
+								stop:    p2.arrival_time,
+								direction: p2.direction_id
+							})
+						}
+						tdata[key] = objList;
+
+					})
+					callback(cb,tdata);
 				})
 			};
-
 
 		var movementTest = false;
 			var getRouteTripsData = function getRouteTripsData(AgencyID, Day){
@@ -141,12 +170,92 @@ var gtfsDataMod = (function(){
 				})
 			};
 
+
+			var Route = function(id){
+				this.id = id;
+				this.trips = [];
+				this.addTrip = function(trip){
+					this.trips.push(trip);
+				}
+			}
+			var Trip = function(id,route_id){
+				this.id = id;
+				this.route_id = route_id;
+				this.direction_id = 0;
+				this.intervals = [];
+				this.addInterval = function(interval){
+					this.intervals.push(interval);
+				}
+			}
+			var getSimpleSched = function(AgencyID,opt,cb){
+				if(reqUndef(AgencyID,'AgencyID'))
+					return console.log("undefined ID");
+				if(reqUndef(opt.Day,'Day'))
+					return console.log("undefined day");
+
+				if(!haveReqFunc(cb))
+					return console.log('bad function')
+				var url = HOST+'/agency/'+AgencyID+'/'+opt.Day+'/schedule';
+				d3.json(url,function(err,data){
+					if(err) console.log(err);
+					var Routes = {};
+					var trips = {};
+					data.forEach(function(trip){
+						var id = JSON.stringify(trip.stops);
+						trips[id] = trips[id] || new Trip(id,trip.route_id);
+						trips[id].addInterval([trip.starting,trip.ending]);
+						if(trips[id].direction_id && trips[id].direction_id !== trip.direction_id)
+							console.log('!!!SHIFT!!!');
+						trips[id].direction_id = trip.direction_id;
+					})
+
+					Object.keys(trips).forEach(function(trip_id){
+						var trip = trips[trip_id];
+						var rid = trip.route_id;
+						Routes[rid] = Routes[rid] || new Route(rid);
+						Routes[rid].addTrip(trip);
+					})
+					
+					if(typeof opt.route_id !== 'undefined')
+						callback(cb,Routes[opt.route_id]);
+					else
+						callback(cb,Routes);
+				})
+			}
+
+			var editStops = function(newStops){
+				var url = HOST+'/data/upload/stops';
+				var data ={data:newStops};
+				d3.json(url)
+				.header('Content-Type', 'application/json')
+				.post(JSON.stringify(data),function(err,data){
+					console.log(data);
+				});	
+			}
+			var editRoute = function(newRoute){
+				var url = HOST+'/data/upload/route';
+				var data = {data:newRoute}
+				d3.json(url)
+				.header('Content-Type', 'application/json')
+				.post(JSON.stringify(data),function(err,data){
+					console.log(data);
+				});	
+			}
+
 			return {
 				'getRoutes': getRoutesData,
 				'getStops' : getStopsData,
 				'getTrips' : getTripsData,
 				'getRouteTrips' : getRouteTripsData,
-				'getSegmentData':getSegmentData
+				'getSegmentData':getSegmentData,
+				'getSchedule':getSimpleSched,
+				'editStops': editStops,
+				'editRoute': editRoute,
+
 			}
 
 	})();
+
+	if(module && module.exports){
+		module.exports = gtfsDataMod;
+	}

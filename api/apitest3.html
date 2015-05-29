@@ -1,0 +1,83 @@
+
+<html>
+<head>
+	<title> API TEST3 </title>
+<style>
+	path:hover{
+  stroke-width:16px;
+}
+
+</style>
+</head>
+<body>
+
+
+	<script src="../bower_components/d3/d3.min.js"></script>
+	<script src="../bower_components/d3-topojson/d3-topojson.v1.min.js"></script>
+	<script src="../bower_components/d3-tip/index.js"></script>
+	<!--
+	<script src='graphstruct.js'></script>
+	<script src='segment-tree-browser.js'></script>
+	<script src='gtfsdata.js'></script>
+	<script src='plot.js'></script>
+	<script src='pather.js'></script>
+	<script src='mover.js'></script>
+	-->
+	<script src='livegtfsapi.js'></script>
+	<script src='fuzzyfixer.js'></script>
+	<script src='nparse.js'></script>
+	<script src='shapefetcher.js'></script>
+	<script src='miniGraph.js'></script>
+	<script>
+		var dotprod = function(l1,l2){
+			var sum =0;
+			for(var i =0, max = Math.min(l1.length,l2.length); i< max; i++){
+				sum += l1[i]*l2[i];
+			}
+			return sum
+		}
+		var diffMins = function(t1,t2){
+			factors = [3600,60,1]
+			t1 = t1.split(':');
+			t2 = t2.split(':');
+			var parseI = function(x){return parseInt(x)}
+			var p1= t1.map(parseI);
+			var p2 = t2.map(parseI);
+			var ctime1 = dotprod(factors,p1);
+			var ctime2 = dotprod(factors,p2);
+			return (ctime2 - ctime1)/60
+		}
+		var thediv = d3.select('body').append('div');
+		var parse = d3.time.format('%X').parse;
+		var livegtfs = require('livegtfs');
+		var fetcher = livegtfs.gtfsData;
+		fetcher.getSchedule(12,{Day:'monday'},function(data){
+			console.log(data)
+			Object.keys(data).forEach(function(rid){
+				
+				console.log(rid);
+				thediv.html(thediv.html()+'<p><em>'+rid +'<em>');
+				var route = data[rid];
+				route.trips.forEach(function(trip){
+					var difftotal = 0, lentotal=0;
+					var len = trip.intervals.length-1;
+					thediv.html(thediv.html()+trip.intervals[0][0] + ' till ' + trip.intervals[len][0] +'<br/>')
+					for(var i = 0; i<len; i++){
+						var cur = trip.intervals[i],next = trip.intervals[i+1];
+						var delta = diffMins(cur[0],next[0]);  	//diff in start times
+						difftotal += delta;			            //average time between trip starts
+						console.log(delta);
+						delta = diffMins(trip.intervals[i][0],trip.intervals[i][1]);
+						lentotal += delta;
+					}
+					lentotal += diffMins(trip.intervals[i][0],trip.intervals[i][1]);
+					if(difftotal == 0){
+						thediv.html(thediv.html()+' Runs once a day ')
+					}else
+						thediv.html(thediv.html()+' Runs every ' + Math.ceil(difftotal/len ) + ' minutes ');
+					thediv.html(thediv.html()+ ' Average Run Time ' + Math.ceil(lentotal/(len+1) ) + 
+						'<br>direction:'+trip.direction_id+'<p/>')
+				})
+			})
+		})
+	</script>

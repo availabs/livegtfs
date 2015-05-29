@@ -34,7 +34,7 @@ mover.tripSetter.setTrip(Element,data,times) -- using precomputed data from getR
 						build a slider that will construct and move trip objects
 
 	Element -- the html div where the slider will be built
-	data    -- the precomputed data for that days schedule structure
+	data    -- the precomputed data for that day's schedule structure
 	times   -- OPTIONAL, sets the starting and ending times to be visualized
 				Defaults to 9:00 - 17:30
 Segmenting API

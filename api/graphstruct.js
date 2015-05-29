@@ -1,7 +1,4 @@
 
-
-
-
 var newRGraph = (function(){
 			var Graph = function(){
 					this.numEdges  = 0;   //private variable for the number of edges
@@ -307,4 +304,4 @@ var newRGraph = (function(){
 				return newRGraph;
 })();
 if(typeof module !== 'undefined')
-	module.exports ={'newRGraph':newRGraph};
+	module.exports = newRGraph;

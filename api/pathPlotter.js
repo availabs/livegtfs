@@ -1,15 +1,22 @@
 
 var pathPlotter = (function(){
 
-	var plotNewRoute = function plotNewRoute(featureCollection,path){
-		var plot = d3.select("#plot");
-		var  route = featureCollection.features[0].properties.route_id;
-		var paths = plot.selectAll("#plot path#route_"+route);
-		paths.data(featureCollection.features)
+	var plotNewRoute = function plotNewRoute(route,path,plotId){
+		var plot = d3.select("#"+plotId);
+		var paths = plot.selectAll("#"+plotId+" path#route_"+route.properties.route_id);
+
+		var features = [];
+		var len = route.stations.length;
+		for(var i = 0; i< len; i++){
+			var	startStop = route.stations[i];
+			var line = route.geometry.coordinates[i];
+			features.push({type:'Feature',geometry:{coordinates:line,type:'LineString'},properties:{start:startStop[0],end:startStop[1]}});
+		}
+
+		paths.data(features)
 				.enter().append("path")
-				.attr("class",function(d){return "route_"+d.properties.route_id;})
+				.attr("class",function(d){return "route_"+route.properties.route_id;})
 				.attr("id",function(d,i){ 
-				
 					str = "_s_"
 					+nparse(d.properties.start.properties.stop_ids[0])+"_e_"+nparse(d.properties.end.properties.stop_ids[0]);
 				return str;
@@ -17,7 +24,7 @@ var pathPlotter = (function(){
 				})
 
 
-				.style("stroke",function(d){var color = d.properties.route_color; if(color){return '#'+color;} return '#000' })
+				.style("stroke",function(d){var color = route.properties.route_color; if(color){return '#'+color;} return '#000' })
 				.style('fill','none')
 				.style('stroke-width','1pt')
 				.on('mouseover',function(d){
@@ -31,12 +38,12 @@ var pathPlotter = (function(){
 
 	var plotter = function plotter(id,generator,settings){
 		var routeSegments = generator(id);
-		if(routeSegments.features.length >0){
+		if(routeSegments.geometry.coordinates.length >0){
 			if(typeof settings.path !== 'undefined'){
-				plotNewRoute(routeSegments,settings.path);
+				plotNewRoute(routeSegments,settings.path,settings.plotId);
 			}else{
 				plotObj = plotCalcs(settings.data,settings.plotId,settings.scaleFactor);
-				plotNewRoute(routeSegments,plotObj.path);
+				plotNewRoute(routeSegments,plotObj.path,settings.plotId);
 
 			}
 		}
@@ -52,26 +59,27 @@ var pathPlotter = (function(){
 		}
 	}
 
-	var plotSegments = function(segData,settings,id){
-		var routeIds = Object.keys(segData), path;
-		checkSettings(settings);
-		if(typeof settings.path === 'undefined'){
-			path = plotCalcs(settings.data,settings.plotId,settings.scaleFactor).path;
+	var plotSegments = function(segData,plotId,scaleFactor,RouteId){
+		var path,plotObj;
+		if(RouteId){
+			segData.features.forEach(function(d,i){
+				if(d.properties.route_id === RouteId){
+					plotObj = plotCalcs(segData,plotId,scaleFactor,segData.features[i]);
+					path = plotObj.path;
+					plotNewRoute(d,path,plotId);
+				}
+			});
+			
 		}else{
-			path = settings.path;
-		}
-		if(!id){
-			routeIds.forEach(function(id){
-				if(segData[id].features.length > 0)
-					plotNewRoute(segData[id],path);
-			})
-		}else{
-			if(routeIds.indexOf(id) < 0)
-				console.log('Unknown Route')
-			else if(segData[id].features.length > 0)
-				plotNewRoute(segData[id],path);
-			else
-				console.log('Empty Route')
+			plotObj = plotCalcs(segData,plotId,scaleFactor);
+		
+			path = plotObj.path;
+			segData.features.forEach(function(route){
+				if(segData.features.length > 0 && !RouteId)
+					plotNewRoute(route,path,plotId);
+				else
+					console.log('Empty Route')
+			});
 		}
 	}
 
@@ -93,7 +101,7 @@ var pathPlotter = (function(){
 			}
 		})
 	};
-	var plotCalcs = function(Data,plotId,scaleFactor){
+	var plotCalcs = function(Data,plotId,scaleFactor,feature){
 		var W_height=window.outerHeight,
 		W_width=window.outerWidth;
 		var group = d3.select('#'+plotId);
@@ -110,7 +118,12 @@ var pathPlotter = (function(){
 		if(!exists){
 			var Element = d3.select('body').append('div');
 		    var x1,x2,y1,y2,bounds;
-		    var bounds = path.bounds(Data);
+		    var bounds;
+		    if(feature){
+		    	bounds = path.bounds(feature);
+		    }else{
+		    	bounds = path.bounds(Data);
+		    }
 		    /*Here we want to resize the image of the paths to fit the svg
 		    /*get the bounds of the figure*/
 		    x1 = bounds[0][0], x2 = bounds[1][0],y1 = bounds[0][1], y2 = bounds[1][1];
@@ -131,3 +144,6 @@ var pathPlotter = (function(){
 	return {plotPaths:plotPathedRoutes,plotSegs:plotSegments};
 
 })()
+
+if(typeof module !== 'undefined')
+	module.exports = pathPlotter;

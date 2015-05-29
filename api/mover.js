@@ -1,3 +1,4 @@
+var segmentTree = require('./segment-tree-browser');
 var mover = (function(){
 	var tripRanges = {
 		ranges:{},
@@ -174,7 +175,6 @@ var mover = (function(){
 								return 'translate(50,50)';
 							reverse = true;
 						}
-
 						var length = path1.getTotalLength();   //get length of the curve
 						var shift = parseTime(interval.start).getTime();
 						var	time = (value.getTime()-shift)/(parseTime(interval.stop).getTime() - shift);   //calc % point in time interval
@@ -261,15 +261,15 @@ var mover = (function(){
 			var built = false;
 			var isBuilt = function(){return built};
 			var setBuilt = function(){built = true};
-
+			
 			return {
-				setTrip:function(Element,data,times){
+				setTrip:function(Element,data,times,id,filter){
 					var segTree = getIntTree();
 					var rangeTree = getRangeTree();
-					if(arguments[3]){
-						parseRouteData(data.intervalObj['route_'+arguments[3]],segTree,rangeTree);
+					if(id){
+						parseRouteData(data.intervalObj['route_'+id],segTree,rangeTree,filter);
 					}else{
-					 	parseRouteData(data,segTree,rangeTree);	
+					 	parseRouteData(data,segTree,rangeTree,filter);	
 					}
 					segTree.buildTree();
 					rangeTree.buildTree();
@@ -281,25 +281,78 @@ var mover = (function(){
 							s.buildSlider(Element,'09:00:00','17:30:00');
 						setBuilt();
 					}
-				}
+				},
+				setNewTrip:function(Element,data,times,id,filter){
+					var segTree = getIntTree();
+					var rangeTree = getRangeTree();
+					if(id){
+						parseRoutes(data.intervalObj['route_'+id],segTree,rangeTree,filter);
+					}else{
+					 	parseRoutes(data,segTree,rangeTree,filter);	
+					}
+					segTree.buildTree();
+					rangeTree.buildTree();
+					var s = slider(); 
+					if(!isBuilt()){
+						if(times)
+							s.buildSlider(Element,times.start,times.end);
+						else
+							s.buildSlider(Element,'09:00:00','17:30:00');
+						setBuilt();
+					}
+				},
+				
 			}
 		})();
 
-		function parseRouteData(data,segTree,rangeTree){
+		function parseRoutes(data,segTree,rangeTree,filter){
 			if(typeof data.intervalObj !== 'undefined'){
 				data = data.intervalObj;
 				var routes = Object.keys(data);
 					routes.forEach(function(route){
-						parseTripData(data[route].trips,segTree,rangeTree);
+						parseTrips(data[route],segTree,rangeTree,filter);
 					})
 			}else{
-				parseTripData(data.trips,segTree,rangeTree);
+				parseTrips(data,segTree,rangeTree,filter);
 			}
 
 		}
-		function parseTripData(trips,segTree,rangeTree){
+
+		function parseTrips(trips,segTree,rangeTree,filter){
+			Object.keys(trips).forEach(function(trip){
+				trips[trip].forEach(function(interval){
+					var start = timeToInt(interval.start);
+					var end = timeToInt(interval.stop);
+					var intervalObj;
+					if(start < end){
+						intervalObj = {name:trip,interval:interval}
+						segTree.pushInterval(start,end,intervalObj);
+					}
+				})
+				var begin = timeToInt(trips[trip][0].start);
+				var end = timeToInt(trips[trip][trips[trip].length-1].stop);
+				if(begin < end){
+					rangeTree.pushInterval(begin,end,trip);
+				}
+			})
+		}
+
+		function parseRouteData(data,segTree,rangeTree,filter){
+			if(typeof data.intervalObj !== 'undefined'){
+				data = data.intervalObj;
+				var routes = Object.keys(data);
+					routes.forEach(function(route){
+						parseTripData(data[route].trips,segTree,rangeTree,filter);
+					})
+			}else{
+				parseTripData(data.trips,segTree,rangeTree,filter);
+			}
+
+		}
+		function parseTripData(trips,segTree,rangeTree,filter){
 			var keys = Object.keys(trips);
 			keys.forEach(function(trip){
+					if(!filter || filter.indexOf(trip) >= 0){
 						trips[trip].intervals.forEach(function(interval){
 							var start = timeToInt(interval.start);
 							var end = timeToInt(interval.stop);
@@ -313,8 +366,8 @@ var mover = (function(){
 						if(begin < end){
 							rangeTree.pushInterval(begin,end,trip);
 						}
-
-					})
+					}
+				})
 		}
 
 		function getTripRanges(routeIntervals){
@@ -353,3 +406,5 @@ var mover = (function(){
 
 		return {tripSetter:tripSetter}
 })();
+if(typeof module !== 'undefined')
+	module.exports = mover;

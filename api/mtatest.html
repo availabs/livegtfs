@@ -1,0 +1,33 @@
+<html>
+<head>
+
+</head>
+
+<body>
+
+	<script src="../bower_components/d3/d3.min.js"></script>
+	<script src="../bower_components/d3-topojson/d3-topojson.v1.min.js"></script>
+	<script src="../bower_components/d3-tip/index.js"></script>
+
+	<script src='livegtfsapi.js'></script>
+	<script src='fuzzyfixer.js'></script>
+	<script src='nparse.js'></script>
+
+	<script>
+			var livegtfs = require('livegtfs');
+			var fetcher = livegtfs.gtfsData;
+			var el = d3.select('body').append('div');
+			var plotter = livegtfs.plotter(el);
+			var zoom = 50;
+			var mover = livegtfs.mover;
+			fetcher.getSegmentData(109,function(segData){
+					console.log(segData);
+					var plotObj = {data:segData.stops,plotId:'plot',scaleFactor:50};
+					keys = Object.keys(segData);
+					livegtfs.pather.plotSegs(segData,'plot',zoom);
+				})
+			fetcher.getRouteTrips(109,"MONDAY",function(data){
+				mover.tripSetter.setTrip(el,data)
+			})
+
+	</script>

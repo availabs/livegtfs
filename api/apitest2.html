@@ -1,0 +1,143 @@
+<html>
+<head>
+	<title> API TEST </title>
+<style>
+
+body{
+	width:100%;
+	height:100%;
+}
+
+#map{
+	width:100%;
+	height:100%;
+}
+</style>
+</head>
+<body>
+
+	<link rel="stylesheet" href="../bower_components/leaflet/dist/leaflet.css">
+	<script src="../bower_components/d3/d3.min.js"></script>
+
+	<script src="../bower_components/d3-topojson/d3-topojson.v1.min.js"></script>
+	<script src="../bower_components/d3-tip/index.js"></script>
+	<script src="../bower_components/leaflet/dist/leaflet.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+	 
+	<!--
+	<script src='graphstruct.js'></script>
+	<script src='segment-tree-browser.js'></script>
+	<script src='gtfsdata.js'></script>
+	<script src='plot.js'></script>
+	<script src='pather.js'></script>
+	<script src='mover.js'></script>
+	-->
+	<script src='livegtfsapi.js'></script>
+	<script src='fuzzyfixer.js'></script>
+	<script src='nparse.js'></script>
+	<script src='shapefetcher.js'></script>
+	<script src='miniGraph.js'></script>
+	<script src='leafletExt.js'></script>
+	<div id="map">
+	</div>
+</body>
+<script>
+ 
+		
+
+		var fetcher = livegtfs.gtfsData;
+		// //var el = d3.select('body').append('div').attr('id','map');
+		// //var plotter = livegtfs.plotter(el);
+		// var plotObj={};
+		// var util = livegtfs.other;
+		var queue = [];
+		var stopDict = {};
+		var graph = new miniGraph();
+		var mapquestOSM = L.tileLayer("http://{s}.tiles.mapbox.com/v3/am3081.h0po4e8k/{z}/{x}/{y}.png");
+        //L.Icon.Default.imagePath= '/bower_components/leaflet/dist/images';
+        map = L.map("map", {
+          center: [39.8282, -98.5795],
+          zoom: 4,
+          layers: [mapquestOSM],
+          zoomControl: true,
+          attributionControl:false
+        });
+			
+			fetcher.getRoutes(12,function(rdata){
+				console.log('routes',rdata);
+				rdata.features = rdata.features.filter(function(d){return d.properties.route_id === '50-142'})
+				Lext.addroutes(rdata,map);
+           		fetcher.getStops(12,{format:'geo'},function(sdata){
+           			
+           			sdata.features = sdata.features///.filter(function(d){return d.properties.stop_id==='6605' || d.properties.stop_id==='6098'})
+           			sdata = fuzzyfixer(rdata,sdata)
+           			Lext.addstops(sdata,map);
+           			sdata.features.forEach(function(stop){
+								stopDict[stop.properties.stop_id] = stop.geometry.coordinates;
+							})
+           			console.log(sdata);
+      //      			fetcher.getSchedule(12,{Day:'TUESDAY'},function(tdata){
+						// 		// livegtfs.mover.tripSetter.setSchedule(el,tdata,{start:'07:15:00',end:'07:55:00'});
+								
+						// 		console.log(tdata)
+						// 		Object.keys(tdata).filter(function(d){
+						// 			if(d==='233-142' || d==='814-142')
+						// 				return true;
+						// 			else 
+						// 				return false;})
+						// 			.forEach(function(route_id){
+						// 			var route = tdata[route_id];
+						// 			route.trips.forEach(function(trip){
+						// 				var stops = JSON.parse(trip.id);
+						// 				var len = stops.length -1;			//subtract two because we are looking at gaps between items not the actual items.
+										
+						// 				for(var i=0; i<len; i++){
+						// 					var tobj = {route_id:route_id,start_id:stops[i],stop_id:stops[i+1]};
+						// 					var newEdge;
+						// 					newEdge = graph.addEdge(tobj.start_id,tobj.stop_id);
+						// 					if(newEdge){
+						// 						queue.push(tobj)
+						// 					}	
+						// 				}
+												
+						// 			})	
+										
+						// 		})
+						// 		var i=0;
+						// 		console.log(queue.length)
+						// 		var tid = setInterval(function(){
+						// 			var start,stop,id1,id2
+						// 			if(i >= queue.length){
+						// 				clearInterval(tid);
+						// 				return;
+						// 			}
+						// 			id1 = queue[i].start_id; id2 = queue[i].stop_id;
+						// 					start = stopDict[id1];
+						// 					stop  = stopDict[id2];
+									
+						// 			shapefetcher.fetch(start,stop,function(shape,route){
+						// 				console.log(id1,id2);
+										
+						// 					var obj = {
+						// 					type:'Feature',
+						// 					geometry:{coordinates:shape,type:"LineString"},
+						// 					properties:{route_id:'route_'+route+'_s_'+id1+'_e_'+id2,route_color:'#444'}
+						// 					};
+						// 					L.geoJson(obj,{}).addTo(map)	
+						// 					i+=1;		
+										
+										
+						// 				// plotter.plotShape(shape,'plot','route_'+route+'_s_'+id1+'_e_'+id2,'LineString');
+						// 			},queue[i].route)	
+									
+						// 		}, 2000)
+								
+
+						// })
+           		})		
+			});
+				
+			
+
+			
+	</script>

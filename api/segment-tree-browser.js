@@ -322,3 +322,7 @@ var segmentTree = function() {
     }
   }
 }
+
+if(module && module.exports){
+  module.exports = segmentTree;
+}

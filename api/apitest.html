@@ -1,4 +1,4 @@
-//apitest.html
+n//apitest.html
 
 <html>
 <head>
@@ -16,6 +16,7 @@
 	<script src="../bower_components/d3/d3.min.js"></script>
 	<script src="../bower_components/d3-topojson/d3-topojson.v1.min.js"></script>
 	<script src="../bower_components/d3-tip/index.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
 	<!--
 	<script src='graphstruct.js'></script>
 	<script src='segment-tree-browser.js'></script>
@@ -24,9 +25,12 @@
 	<script src='pather.js'></script>
 	<script src='mover.js'></script>
 	-->
+	<script src='livegtfsapi.js'></script>
 	<script src='fuzzyfixer.js'></script>
 	<script src='nparse.js'></script>
-	<script src='livegtfsapi.js'></script>
+	<script src='shapefetcher.js'></script>
+	<script src='miniGraph.js'></script>
+	
 	<script>
 
 			
@@ -36,47 +40,108 @@
 			var plotter = livegtfs.plotter(el);
 			var plotObj={};
 			var util = livegtfs.other;
-				fetcher.getRouteTrips(12,'TUESDAY',function(data){
-						// console.log(data);
-						// var routes = data.intervalObj;
-						// var keys = Object.keys(routes);
-						// keys.forEach(function(r){
-
-						// 	if(r === 'route_A'){
-						// 		var trips = routes[r].trips;
-						// 		ks = Object.keys(trips);
-						// 		ks.forEach(function(t){
-						// 			if(t !== "B20140608WKD_027700_A..N09R")
-						// 				delete trips[t];
-						// 		})
-						// 	}else
-						// 		delete routes[r]
-						// })
-						livegtfs.mover.tripSetter.setTrip(el,data,{start:'07:30:00',end:'08:00:00'});
-				 })
+				// fetcher.getRouteTrips(12,'TUESDAY',function(data){
+				// 		filter = ['_1-142.2328153-AUG13-Albany-Weekday-01']
+				// 		livegtfs.mover.tripSetter.setTrip(el,data,{start:'07:15:00',end:'07:55:00'},null,filter);
+				//  })
+				zoom = 50
 				// fetcher.getRoutes(12,function(rdata){
 				// 	console.log('routes',rdata);
-				// 	var junctions = util.junctionUtil.getJuncs(rdata);
-				// 	//rdata.features[rdata.features.length-1].geometry.coordinates.splice(1,1);
-				// 	//plotter.plotRoutes(rdata,'plot',10000,'905-142')
+				// 	//var junctions = util.junctionUtil.getJuncs(rdata);
+				// 	plotter.plotRoutes(rdata,'plot',zoom)
+					
 				// 	fetcher.getStops(12,{Type:'FeatureCollection'},function(sdata){
+				// 		//sdata = fuzzyfixer(rdata,sdata)
 				// 		console.log('stops',sdata);
-				// 		sdata = fuzzyfixer(rdata,sdata)
-				// 		util.junctionUtil.mergeJuncs(sdata,junctions);
-				// 		plotObj = {data:sdata,plotId:'plot',scaleFactor:50}			
+				// 		//util.junctionUtil.mergeJuncs(sdata,junctions);
+				// 		plotObj = {data:sdata,plotId:'plot',scaleFactor:3000}			
 				// 		console.log(sdata);
-				// 		// plotter.plotStops(sdata,'plot',50,junctions,'531-142');
-				// 		livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj);
+				// 		plotter.plotStops(sdata,'plot',zoom,null);
+				// 		curStops = sdata.features.filter(function(d){
+				// 			if(d.properties.routes.indexOf('1-142') >= 0)
+				// 				return d
+				// 		});					
+				// 		//livegtfs.pather.plotPaths(rdata.features,sdata.features,plotObj,'1-142');
 				// 	});
 				// });
 
-				fetcher.getSegmentData(12,function(segData){
-					console.log(segData);
-					var plotObj = {data:segData.stops,plotId:'plot',scaleFactor:50};
-					livegtfs.pather.plotSegs(segData.segments,plotObj);
+				// fetcher.getSegmentData(12,function(segData){
+				// 	console.log(segData);
+				// 	var plotObj = {data:segData.stops,plotId:'plot',scaleFactor:50};
+				// 	keys = Object.keys(segData);
+				// 	livegtfs.pather.plotSegs(segData,'plot',zoom,'1-142');
+				// })
+				// fetcher.getRoutes(12,function(rdata){
+				// 	var routes = rdata.features.map(function(f){return f.properties.route_id;})
+				// 	cb(routes);
+				// })
+				var queue = [];
+				var stopDict = {};
+				fetcher.getRoutes(12,function(rdata){
+
+					fetcher.getStops(12,{Type:'FeatureCollection'},function(sdata){
+							
+							//sdata = fuzzyfixer(rdata,sdata);
+							sdata.features.forEach(function(stop){
+								stopDict[stop.properties.stop_id] = stop.geometry.coordinates;
+							})
+							var plotted = false;
+							console.log(sdata)
+						var graph = new miniGraph();
+						plotter.plotStops(sdata,'plot',zoom);
+						// routes.forEach(function(route_id){
+							fetcher.getSchedule(12,{Day:'TUESDAY'},function(tdata){
+								// livegtfs.mover.tripSetter.setSchedule(el,tdata,{start:'07:15:00',end:'07:55:00'});
+								
+								console.log(tdata)
+								Object.keys(tdata).forEach(function(route_id){
+									var route = tdata[route_id];
+									route.trips.forEach(function(trip){
+										var stops = JSON.parse(trip.id);
+										var len = stops.length -1;			//subtract two because we are looking at gaps between items not the actual items.
+										
+										for(var i=0; i<len; i++){
+											var tobj = {route_id:route_id,start_id:stops[i],stop_id:stops[i+1]};
+											var newEdge;
+											newEdge = graph.addEdge(tobj.start_id,tobj.stop_id);
+											if(newEdge){
+												queue.push(tobj)
+											}	
+										}
+												
+									})	
+										
+								})
+								var i=0;
+								console.log(queue.length)
+								var tid = setInterval(function(){
+									var start,stop,id1,id2
+									id1 = queue[i].start_id; id2 = queue[i].stop_id;
+											start = stopDict[id1];
+											stop  = stopDict[id2];
+									shapefetcher.fetch(start,stop,function(shape,route){
+										console.log(id1,id2);
+										plotter.plotShape(shape,'plot','route_'+route+'_s_'+id1+'_e_'+id2,'LineString');
+									},queue[i].route)	
+									i += 1;
+									if(i >= queue.length)
+										clearInterval(tid);
+								}, 4000)
+								
+
+						})
+					// })
+					})
 				})
+
+				// fetcher.getStops(12,{Type:'FeatureCollection'},function(sdata){
+				// 		plotter.plotStops(sdata,'plot',zoom,null,'1-142');
+						
+				// 	});
+
+				//google test
 				
-			
+
 
 			
 	</script>

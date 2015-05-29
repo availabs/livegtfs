@@ -1,15 +1,16 @@
-
-var node = function(v){
-	this.val = v;
-	this.adjs = [];
-	this.addadj = function(v){
-		this.adjs.push(v);
-	}
-	this.isLinked = function(v){
-		return this.adjs.indexOf(v) >= 0;
-	}
-}
 var miniGraph = function(){
+
+	var node = function(v){
+		this.val = v;
+		this.adjs = [];
+		this.addadj = function(v){
+			this.adjs.push(v);
+		}
+		this.isLinked = function(v){
+			return this.adjs.indexOf(v) >= 0;
+		}
+	}
+	
 	this.nodes = {}
 	this.queryEdge = function(v1,v2){
 		if(this.nodes[v1] && this.nodes[v2]){
