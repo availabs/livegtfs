@@ -181,11 +181,17 @@ var gtfsDataMod = (function(){
 			var Trip = function(id,route_id){
 				this.id = id;
 				this.route_id = route_id;
-				this.direction_id = 0;
 				this.intervals = [];
-				this.addInterval = function(interval){
-					this.intervals.push(interval);
+				this.start_times = [];
+				this.stop_times  = [];
+				this.addInterval = function(start,stop){
+					this.start_times.push(start);
+					this.stop_times.push(stop);
+					this.intervals.push([start,stop]);
+					if(this.start_times.length !== this.stop_times.length)
+						console.log("Interval ERROR");
 				}
+
 			}
 			var getSimpleSched = function(AgencyID,opt,cb){
 				if(reqUndef(AgencyID,'AgencyID'))
@@ -200,13 +206,14 @@ var gtfsDataMod = (function(){
 					if(err) console.log(err);
 					var Routes = {};
 					var trips = {};
+					console.log(data);
 					data.forEach(function(trip){
 						var id = JSON.stringify(trip.stops);
 						trips[id] = trips[id] || new Trip(id,trip.route_id);
-						trips[id].addInterval([trip.starting,trip.ending]);
-						if(trips[id].direction_id && trips[id].direction_id !== trip.direction_id)
-							console.log('!!!SHIFT!!!');
-						trips[id].direction_id = trip.direction_id;
+						for(var i = 0; i < trip.starts.length; i++){
+							trips[id].addInterval(trip.starts[i],trip.ends[i]);
+						}
+						trips[id].tripids = trip.trips;
 					})
 
 					Object.keys(trips).forEach(function(trip_id){
@@ -215,21 +222,21 @@ var gtfsDataMod = (function(){
 						Routes[rid] = Routes[rid] || new Route(rid);
 						Routes[rid].addTrip(trip);
 					})
-					
+					console.log(Routes);
 					if(typeof opt.route_id !== 'undefined')
 						callback(cb,Routes[opt.route_id]);
 					else
 						callback(cb,Routes);
 				})
 			}
-
-			var editStops = function(newStops){
+ 
+			var editStops = function(data,cb){
 				var url = HOST+'/data/upload/stops';
-				var data ={data:newStops};
 				d3.json(url)
 				.header('Content-Type', 'application/json')
 				.post(JSON.stringify(data),function(err,data){
 					console.log(data);
+					cb(err,data);
 				});	
 			}
 			var editRoute = function(newRoute){
