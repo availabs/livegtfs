@@ -1,0 +1,39 @@
+<html>
+<head>
+<title>non meshed</title>
+</head>
+<body>
+	<script src="../bower_components/d3/d3.min.js"></script>
+	<script src="../bower_components/d3-topojson/d3-topojson.v1.min.js"></script>
+	<script src="../bower_components/d3-tip/index.js"></script>
+	<script src='livegtfsapi.js'></script>
+
+	<script>
+		var api = require('livegtfs');
+		var el = d3.select('body').append('div');
+		var plotter1 = api.plotter(el);
+		var el2 = d3.select('body').append('div');
+		var plotter2 = api.plotter(el2);
+		var fetcher = api.gtfsData;
+		fetcher.getRoutes(12,function(geoData){
+			console.log(geoData);
+			var routefc = topojson.feature(geoData,geoData.objects.routes);
+			routefc.bbox = geoData.bbox, routefc.transform = geoData.transform;
+			var id;
+			var route = routefc.features.forEach(function(d,i){
+				if(d.properties.route_id==='6-142'){
+					id = i;
+				}
+			})
+			route = routefc.features[id];
+			routefc.features.splice(id,1);
+			route.geometry.coordinates.forEach(function(d){
+				var obj = {type:"Feature",properties:{route_id:'6-142'},geometry:{type:'MultiLineString',coordinates:[d]}};
+				routefc.features.push(obj);
+			})
+			console.log(route);
+			
+			plotter1.plotRoutes(routefc,'plot',500,'6-142');
+			
+		})
+	</script>

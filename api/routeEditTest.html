@@ -18,16 +18,16 @@
 			var fetcher = livegtfs.gtfsData;
 			var el = d3.select('body').append('div');
 			var plotter = livegtfs.plotter(el);
-			var zoom = 50;
+			var zoom = 100;
 			var mover = livegtfs.mover;
-			fetcher.getSegmentData(109,function(segData){
-					console.log(segData);
-					var plotObj = {data:segData.stops,plotId:'plot',scaleFactor:50};
-					keys = Object.keys(segData);
-					livegtfs.pather.plotSegs(segData,'plot',zoom);
+			fetcher.getRoutes(109,function(rData){
+					console.log(rData);
+					//var plotObj = {data:segData.stops,plotId:'plot',scaleFactor:100};
+					
+					plotter.plotRoutes(rData,'plot',zoom,'A');
 				})
-			fetcher.getRouteTrips(109,"MONDAY",function(data){
-				mover.tripSetter.setTrip(el,data)
-			})
+			// fetcher.getRouteTrips(109,"MONDAY",function(data){
+			// 	mover.tripSetter.setTrip(el,data)
+			// })
 
 	</script>

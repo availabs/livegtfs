@@ -76,7 +76,8 @@ Stop.prototype.delTrip = function(group){
 		groups.splice(ix,1);
 }
 Stop.prototype.hasNoGroups = function(){
-	return this.stop.properties.groups.length === 0;
+	var list = this.stop.properties.groups;
+	return !list || list.length === 0;
 }
 Stop.prototype.inGroup = function(gid){
 	return this.stop.properties.groups.indexOf(gid) >= 0;

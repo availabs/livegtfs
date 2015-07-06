@@ -6,6 +6,12 @@ Stops.prototype.addStop = function(stop){
 	this.ids.push(stop.getId());
 	this.list.push(stop);
 }
+Stops.prototype.addStops = function(stps){
+	var stopc = this;
+	stps.forEach(function(d){
+		stopc.addStop(d);
+	})
+}
 Stops.prototype.delStop = function(id){
 	var ix = this.ids.indexOf(id);
 	this.ids.splice(id,1);
@@ -14,6 +20,9 @@ Stops.prototype.delStop = function(id){
 Stops.prototype.getStop = function(id){
 	var ix = this.ids.indexOf(id);
 	return this.list[ix]
+}
+Stops.prototype.getStops = function(){
+	return this.list;
 }
 Stops.prototype.getNoAssociates = function(){
 	this.list.filter(function(d){

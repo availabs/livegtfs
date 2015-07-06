@@ -37,4 +37,7 @@ Routes.prototype.getIds = function(){
 Routes.prototype.cloneIds = function(){
 	return this.ids.map(function(d){return d;});
 }
+Routes.prototype.containsRoute = function(id){
+	return this.ids.indexOf(id) >= 0;
+}
 module.exports={Route:Route,Routes:Routes};

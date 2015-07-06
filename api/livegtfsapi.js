@@ -493,6 +493,7 @@ var gtfsDataMod = (function(){
 				this.route_id = route_id;
 				this.direction_id = 0;
 				this.intervals = [];
+
 				this.addInterval = function(interval){
 					this.intervals.push(interval);
 				}
@@ -510,6 +511,7 @@ var gtfsDataMod = (function(){
 					if(err) console.log(err);
 					var Routes = {};
 					var trips = {};
+					console.log(data);
 					data.forEach(function(trip){
 						var id = JSON.stringify(trip.stops);
 						trips[id] = trips[id] || new Trip(id,trip.route_id);
@@ -517,6 +519,7 @@ var gtfsDataMod = (function(){
 						if(trips[id].direction_id && trips[id].direction_id !== trip.direction_id)
 							console.log('!!!SHIFT!!!');
 						trips[id].direction_id = trip.direction_id;
+						trips[id].tripids = trip.tripids;
 					})
 
 					Object.keys(trips).forEach(function(trip_id){
@@ -533,13 +536,14 @@ var gtfsDataMod = (function(){
 				})
 			}
 
-			var editStops = function(newStops){
+			var editStops = function(newStops,agency,ids,cb){
 				var url = HOST+'/data/upload/stops';
-				var data ={data:newStops};
+				var data = {data:newStops,id:agency,trip_ids:ids};
 				d3.json(url)
 				.header('Content-Type', 'application/json')
 				.post(JSON.stringify(data),function(err,data){
 					console.log(data);
+					cb(err,data);
 				});	
 			}
 			var editRoute = function(newRoute){
@@ -1673,7 +1677,7 @@ var segmentTree = function() {
 if(module && module.exports){
   module.exports = segmentTree;
 }
-},{}],"livegtfs":[function(require,module,exports){
+},{}],"livegtfsapi":[function(require,module,exports){
 //livegtfsapi.js
 
 
