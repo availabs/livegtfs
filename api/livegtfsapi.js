@@ -343,7 +343,7 @@ var gtfsDataMod = (function(){
 		}
 
 		var test = false;
-		var HOST = "http://localhost:1337"
+			var HOST = "http://api.availabs.org/gtfs" //"http://localhost:1337"
 			var getRoutesData = function getRoutesData(AgencyID,cb){
 				//We use the availabs api to retrieve route data of specified id
 				if(reqUndef(AgencyID,'AgencyID'))
