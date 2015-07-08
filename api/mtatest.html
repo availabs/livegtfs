@@ -27,7 +27,7 @@
 					livegtfs.pather.plotSegs(segData,'plot',zoom);
 				})
 			fetcher.getRouteTrips(109,"MONDAY",function(data){
-				mover.tripSetter.setTrip(el,data)
+				mover.tripSetter.setTrip(el,data,{start:'05:30:00',end:'06:00:00'});
 			})
 
 	</script>

@@ -600,8 +600,8 @@ var mover = (function(){
 	}		
 
 		var slider = function(){
-			var HOST = "http://localhost:1337"
-
+			//var HOST = "http://localhost:1337"
+			var HOST = "http://api.availabs.org/gtfs"
 
 			function getMaxOfArray(numArray){
 				return Math.max.apply(null,numArray);
@@ -1155,7 +1155,8 @@ var display = function(point){
 }
 var plotMod = function(Element){
 	var Gpath,Gprojection;
-	var HOST = "http://localhost:1337"
+	//var HOST = "http://localhost:1337"
+	var HOST = "http://api.availabs.org/gtfs"
 	var W_height=window.outerHeight,
 		W_width=window.outerWidth;
 	
